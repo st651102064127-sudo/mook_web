@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # 1. Web Server (PHP + Apache)
+  webserver:
+    build: .                        # สั่งให้สร้าง Image จาก Dockerfile ในโฟลเดอร์เดียวกัน
+    container_name: web_supply
+    restart: always
+    ports:
+      - "80:80"                     # เข้าเว็บผ่าน localhost:80
+    volumes:
+      - ./web:/var/www/html         # Map โฟลเดอร์ src ของเราไปที่ server
+    depends_on:
+      - db
+    networks:
+      - supply_network
+
+  # 2. Database (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: mysql_db_supply
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_DATABASE: db_supply
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - supply_network
+
+  # 3. phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma_supply
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: 123
+    ports:
+      - "8080:80"
+    networks:
+      - supply_network
+
+volumes:
+  db_data:
+
+networks:
+  supply_network:
