@@ -8,11 +8,11 @@ $result = mysqli_query($conn, $sql);
 
 // ฟังก์ชันแปลงวันที่เป็นไทย
 function th_date($datetime) {
-    if (!$datetime) return "-";
+    if (!$datetime || $datetime == '0000-00-00 00:00:00' || $datetime == '0000-00-00') return "-";
 
     $months = [
-        "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        "", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+        "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
     ];
     $timestamp = strtotime($datetime);
     
@@ -26,86 +26,155 @@ function th_date($datetime) {
 <!DOCTYPE html>
 <html lang="th">
 
-<?php include("../../admin/include/header.php"); ?>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการประกาศสัญญาพัสดุ</title>
 
-<body class="sb-nav-fixed" style="background-color: #EEEEEE;">
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Navbar -->
-            <?php include("../../admin/include/navbar.php"); ?>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
 
-            <div id="layoutSidenav">
-                <!-- Sidebar -->
-                <div id="layoutSidenav_nav">
-                    <?php include("../../admin/include/sidebar.php"); ?>
-                </div>
+    <?php include("../../admin/include/header.php"); ?>
 
-                <!-- Content -->
-                <div id="layoutSidenav_content">
-                    <main>
-                        <h1 class="mt-4">ประกาศสัญญาพัสดุ</h1>
+    <style>
+        /* Theme: ราชการทันสมัย */
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background-color: #f4f6f9; 
+            color: #333; 
+        }
+        table.dataTable td, table.dataTable th {
+            font-size: 16px; 
+            vertical-align: middle;
+        }
+        .table-head-gov {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+        }
+        .badge-date {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #555;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
 
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <i class="fas fa-table me-1"></i>
-                                รายการประกาศสัญญาพัสดุ
-                                <a href="../../admin/frminsert/finsert_proContract.php" class="btn btn-success btn-sm float-end">
-                                    + เพิ่มประกาศสัญญาพัสดุ
+<body class="sb-nav-fixed">
+
+    <?php include("../../admin/include/navbar.php"); ?>
+
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <?php include("../../admin/include/sidebar.php"); ?>
+        </div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4 py-4">
+                    
+                    <div class="card border-0 shadow-sm mb-4" style="background-color: #198754; color: white;">
+                        <div class="card-body d-flex justify-content-between align-items-center p-4">
+                            <div>
+                                <h3 class="mb-1 fw-bold"><i class="fas fa-file-contract me-2"></i>ประกาศสัญญาพัสดุ</h3>
+                                <p class="mb-0 opacity-75" style="font-size: 16px;">จัดการข้อมูลสัญญาซื้อขายและสัญญาจ้าง</p>
+                            </div>
+                            <div>
+                                <a href="../../admin/frminsert/finsert_proContract.php" class="btn btn-light text-success fw-bold shadow-sm py-2 px-3">
+                                    <i class="fas fa-plus-circle me-1"></i> เพิ่มสัญญาใหม่
                                 </a>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="card-body">
-                                <table id="datatablesSimple">
-                                    <thead>
+                    <div class="card border mb-4 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <i class="fas fa-list-ul me-1 text-success"></i>
+                            รายการสัญญาทั้งหมด
+                        </div>
+                        <div class="card-body">
+                            <?php if(mysqli_num_rows($result) > 0): ?>
+                                <table id="datatablesSimple" class="table table-striped table-hover border">
+                                    <thead class="table-head-gov">
                                         <tr>
-                                            <th>ลำดับ</th>
-                                            <th>ชื่อสัญญา</th>
-                                            <th>เริ่มสัญญา</th>
-                                            <th>สิ้นสุดสัญญา</th>
-                                            <th>แก้ไข</th>
-                                            <th>ลบ</th>
+                                            <th class="text-center" width="5%">ลำดับ</th>
+                                            <th width="45%">ชื่อสัญญา / โครงการ</th>
+                                            <th width="15%">วันเริ่มสัญญา</th>
+                                            <th width="15%">วันสิ้นสุดสัญญา</th>
+                                            <th class="text-center" width="20%">การจัดการ</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php
-                                        $i = 1;
-                                        while ($row = mysqli_fetch_assoc($result)):
+                                        <?php 
+                                        $i = 1; 
+                                        while ($row = mysqli_fetch_assoc($result)): 
                                         ?>
-                                            <tr>
-                                                <td><?= $i++ ?></td>
-                                                <td><?= htmlspecialchars($row['ContractName']) ?></td>
-                                                <td><?= th_date($row['ContractDate']) ?></td>
-                                                <td><?= th_date($row['ContractEndDate']) ?></td>
-
-                                                <td>
-                                                    <a class="btn btn-warning btn-sm" 
-                                                       href="../../admin/frmedit/frmedit_proContract.php?id=<?= $row['ContractID'] ?>">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                        <tr>
+                                            <td class="text-center"><?= $i++ ?></td>
+                                            <td>
+                                                <span class="fw-medium text-dark"><?= htmlspecialchars($row['ContractName']) ?></span>
+                                                <div class="small text-muted mt-1">
+                                                    <span class="badge bg-light text-secondary border">Ref: #<?= $row['ContractID'] ?></span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge-date" data-order="<?= $row['ContractDate'] ?>">
+                                                    <?= th_date($row['ContractDate']) ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge-date" data-order="<?= $row['ContractEndDate'] ?>">
+                                                    <?= th_date($row['ContractEndDate']) ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <a href="../../admin/frmedit/frmedit_proContract.php?id=<?= $row['ContractID'] ?>" class="btn btn-warning btn-sm text-dark" title="แก้ไข">
+                                                        <i class="fas fa-edit"></i> แก้ไข
                                                     </a>
-                                                </td>
-
-                                                <td>
-                                                    <a class="btn btn-danger btn-sm" 
-                                                       href="../../admin/process/delete_proContract.php?id=<?= $row['ContractID'] ?>"
-                                                       onclick="return confirm('ยืนยันการลบสัญญานี้?')">
-                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    <a href="../../admin/process/delete_proContract.php?id=<?= $row['ContractID'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('ยืนยันการลบสัญญานี้?');" title="ลบ">
+                                                        <i class="fas fa-trash-alt"></i> ลบ
                                                     </a>
-                                                </td>
-                                            </tr>
+                                                </div>
+                                            </td>
+                                        </tr>
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
-                            </div>
+                            <?php else: ?>
+                                <div class="alert alert-secondary text-center py-4" role="alert">
+                                    <i class="fas fa-folder-open me-2"></i> ไม่พบข้อมูลสัญญาในระบบ
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    </main>
+                    </div>
 
-                    <?php include("../../admin/include/footer.php"); ?>
                 </div>
-            </div>
+            </main>
+            <?php include("../../admin/include/footer.php"); ?>
         </div>
     </div>
 
     <?php include("../include/script.php"); ?>
+    
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#datatablesSimple').DataTable({
+                language: { url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json" },
+                pageLength: 10,
+                order: [[2, 'desc']], // เรียงตามวันเริ่มสัญญา (index 2) จากมากไปน้อย
+                columnDefs: [{ orderable: false, targets: [0, 4] }] // ปิด sort ที่ลำดับ(0) และจัดการ(4)
+            });
+        });
+    </script>
 </body>
-
 </html>

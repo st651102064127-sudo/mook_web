@@ -19,7 +19,7 @@
     <div class="collapse navbar-collapse" id="navbar">
       <ul class="navbar-nav me-auto">
 
-        <li><a href="index.php" class="nav-link ">หน้าหลัก</a></li>
+        <li><a href="main.php" class="nav-link ">หน้าหลัก</a></li>
 
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">

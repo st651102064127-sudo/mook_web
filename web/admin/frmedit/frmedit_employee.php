@@ -1,6 +1,6 @@
 <?php
 include "../../assets/connect_db/connect_db.php";
-// include "../../assets/check_login_admin/check_login_admin.php";
+ include "../../assets/check_login_admin/check_login_admin.php";
 
  $id = $_GET['id'];
  $sql = "SELECT * FROM employee WHERE EmpID = ?";

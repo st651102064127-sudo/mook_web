@@ -1,5 +1,6 @@
 <?php
 include "../../assets/connect_db/connect_db.php";
+include "../../assets/check_login_admin/check_login_admin.php";
 
 $id = $_GET['id'] ?? 0;
 
@@ -11,51 +12,114 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $row = mysqli_fetch_assoc($result);
 
-
-function formatDateThai($strDate)
-{
-    if (empty($strDate) || $strDate == "0000-00-00") {
-        return "-";
-    }
-
-    // รายชื่อเดือนภาษาไทย
-    $months = [
-        "",
-        "มกราคม",
-        "กุมภาพันธ์",
-        "มีนาคม",
-        "เมษายน",
-        "พฤษภาคม",
-        "มิถุนายน",
-        "กรกฎาคม",
-        "สิงหาคม",
-        "กันยายน",
-        "ตุลาคม",
-        "พฤศจิกายน",
-        "ธันวาคม"
-    ];
-
-    // แปลงวันที่
+// ฟังก์ชันแปลงวันที่ (ใช้สำหรับแสดงใน readonly text)
+function formatDateThai($strDate) {
+    if (empty($strDate) || $strDate == "0000-00-00") return "-";
+    $months = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
     $timestamp = strtotime($strDate);
-    if ($timestamp === false) {
-        return "-";
-    }
-
-    $day   = (int)date("d", $timestamp);
+    if ($timestamp === false) return "-";
+    $day = (int)date("d", $timestamp);
     $month = (int)date("m", $timestamp);
-    $year  = (int)date("Y", $timestamp) + 543;
-
-    // คืนค่ารูปแบบ 15 พฤศจิกายน 2568
+    $year = (int)date("Y", $timestamp) + 543;
     return "{$day} {$months[$month]} {$year}";
 }
 ?>
 
-
 <!DOCTYPE html>
-<html lang="en">
-<?php include("../../admin/include/header.php"); ?>
+<html lang="th">
 
-<body class="sb-nav-fixed" style="background-color: #EEEEEE;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แก้ไขประกาศจัดซื้อจัดจ้าง - ระบบจัดการ</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <?php include("../../admin/include/header.php"); ?>
+
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        /* Minimal Card */
+        .card-minimal {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            background-color: #ffffff;
+        }
+
+        /* Form Styling */
+        .form-label {
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e9ecef;
+            background-color: #fcfcfc;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            background-color: #fff;
+            border-color: #198754;
+            box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+        }
+
+        .form-control[readonly] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border-color: transparent;
+        }
+
+        /* File Display & Upload */
+        .file-display-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #198754;
+            background-color: #f0fff4;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body class="sb-nav-fixed">
+
     <?php include("../../admin/include/navbar.php"); ?>
 
     <div id="layoutSidenav">
@@ -65,83 +129,117 @@ function formatDateThai($strDate)
 
         <div id="layoutSidenav_content">
             <main>
-                <div class="container-fluid px-4">
-                    <h1 class="mt-4">การจัดซื้อจัดจ้าง</h1>
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="fas fa-table me-1"></i> แก้ไขประกาศพัสดุ
-                        </div>
-                        <div class="card-body">
-                            <form action="../../admin/process/updete_proNotice.php" method="post" enctype="multipart/form-data">
+                <div class="container-fluid px-4 py-4">
+
+                    <div class="card card-minimal mb-4">
+                        <div class="card-body p-4 p-md-5">
+
+                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                <div>
+                                    <h2 class="fw-bold text-dark mb-1">แก้ไขประกาศจัดซื้อจัดจ้าง</h2>
+                                    <small class="text-muted">แก้ไขข้อมูลรายการ: <?= htmlspecialchars($row['NoticeName']) ?></small>
+                                </div>
+                                <button type="button" class="btn btn-light border text-muted rounded-pill px-3" onclick="history.back()">
+                                    <i class="fas fa-times me-1"></i> ยกเลิก
+                                </button>
+                            </div>
+
+                            <form action="../../admin/process/update_proNotice.php" method="post" enctype="multipart/form-data">
                                 <input type="hidden" name="NoticeID" value="<?= $row['NoticeID'] ?>">
                                 <input type="hidden" name="OldFile" value="<?= $row['NoticeFile'] ?>">
 
-                                <div class="input-group mb-3">
-                                    <label class="input-group-text">เรื่อง</label>
-                                    <input type="text" name="NoticeName" id="NoticeName" class="form-control" value="<?= htmlspecialchars($row['NoticeName']) ?>">
-                                </div>
+                                <div class="row g-5">
+                                    
+                                    <div class="col-lg-8">
+                                        <div class="mb-4">
+                                            <label for="NoticeName" class="form-label">ชื่อประกาศ / เรื่อง <span class="text-danger">*</span></label>
+                                            <input type="text" name="NoticeName" id="NoticeName" 
+                                                   class="form-control form-control-lg fs-6" 
+                                                   value="<?= htmlspecialchars($row['NoticeName']) ?>" required>
+                                        </div>
 
-                                <div class="row">
-                                    <div class="col-lg-6">
-                                        <div class="input-group mb-3">
-                                            <label class="input-group-text">วันที่ประกาศ</label>
-                                            <input type="date" name="NoticeStDate" class="form-control"
-                                                value="<?= date('Y-m-d', strtotime($row['NoticeStDate'])) ?>">
-                                            <span class="input-group-text">
-                                                <?= formatDateThai($row['NoticeStDate']) ?>
-                                            </span>
+                                        <div class="row mb-4">
+                                            <div class="col-md-6">
+                                                <label for="NoticeStDate" class="form-label">วันที่เริ่มประกาศ</label>
+                                                <input type="date" name="NoticeStDate" id="NoticeStDate" class="form-control"
+                                                       value="<?= date('Y-m-d', strtotime($row['NoticeStDate'])) ?>" required>
+                                                <small class="text-muted ps-1"><i class="far fa-clock me-1"></i> เดิม: <?= formatDateThai($row['NoticeStDate']) ?></small>
+                                            </div>
+                                            <div class="col-md-6 mt-3 mt-md-0">
+                                                <label for="NoticeEnDate" class="form-label">วันที่สิ้นสุดประกาศ</label>
+                                                <input type="date" name="NoticeEnDate" id="NoticeEnDate" class="form-control"
+                                                       value="<?= date('Y-m-d', strtotime($row['NoticeEnDate'])) ?>" required>
+                                                <small class="text-muted ps-1"><i class="far fa-clock me-1"></i> เดิม: <?= formatDateThai($row['NoticeEnDate']) ?></small>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">หน่วยงาน</label>
+                                                <input type="text" name="NoticeDepartment" value="กลุ่มงานพัสดุ" 
+                                                       class="form-control" readonly>
+                                            </div>
+                                            <div class="col-md-6 mt-3 mt-md-0">
+                                                <label class="form-label">สังกัด</label>
+                                                <input type="text" name="NoticeAgency" value="โรงพยาบาลหล่มสัก" 
+                                                       class="form-control" readonly>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-lg-6">
-                                        <div class="input-group mb-3">
-                                            <label class="input-group-text">วันที่สิ้นสุด</label>
-                                            <input type="date" name="NoticeEnDate" class="form-control"
-                                                value="<?= date('Y-m-d', strtotime($row['NoticeEnDate'])) ?>">
-                                            <span class="input-group-text">
-                                                <?= formatDateThai($row['NoticeEnDate']) ?>
-                                            </span>
+
+                                    <div class="col-lg-4 d-flex flex-column">
+                                        <div class="p-4 bg-light rounded-3 h-100 d-flex flex-column">
+                                            <label class="form-label fw-bold mb-3"><i class="fas fa-paperclip me-2"></i>เอกสารแนบ</label>
+                                            
+                                            <div class="file-display-box">
+                                                <?php if (!empty($row['NoticeFile'])): ?>
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-file-alt text-primary fa-2x me-3"></i>
+                                                        <div class="overflow-hidden">
+                                                            <a href="../../assets/images/proNotice/<?= $row['NoticeFile'] ?>" target="_blank" class="d-block text-truncate fw-medium text-dark text-decoration-none">
+                                                                <?= $row['NoticeFile'] ?>
+                                                            </a>
+                                                            <small class="text-success">เปิดดูไฟล์ปัจจุบัน</small>
+                                                        </div>
+                                                    </div>
+                                                    <hr class="my-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="DeleteOldFile" id="DeleteOldFile" value="1">
+                                                        <label class="form-check-label text-danger small" for="DeleteOldFile">
+                                                            ต้องการลบไฟล์นี้
+                                                        </label>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="text-center text-muted py-2">
+                                                        <small>ไม่มีไฟล์แนบในระบบ</small>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <div class="upload-area flex-grow-1 d-flex flex-column justify-content-center align-items-center bg-white">
+                                                <i class="fas fa-cloud-upload-alt fa-2x text-secondary mb-2 opacity-50"></i>
+                                                <h6 class="fw-bold text-dark mb-0">อัปโหลดไฟล์ใหม่</h6>
+                                                <small class="text-muted">(ทับไฟล์เดิม)</small>
+                                                <input type="file" name="NoticeFile" id="NoticeFile" 
+                                                       onchange="document.getElementById('fileNameDisplay').innerHTML = '<i class=\'fas fa-check-circle text-success me-1\'></i> ' + this.files[0].name;">
+                                            </div>
+                                            
+                                            <div class="text-center mt-2" style="min-height: 20px;">
+                                                <small id="fileNameDisplay" class="text-dark fw-medium"></small>
+                                            </div>
+
+                                            <button type="submit" name="upload" class="btn btn-success w-100 mt-3 py-2 fw-medium shadow-sm">
+                                                <i class="fas fa-save me-2"></i>บันทึกการแก้ไข
+                                            </button>
                                         </div>
                                     </div>
-                                </div>
 
-
-                                <div class="row">
-                                    <div class="col-lg-6">
-                                        <div class="input-group mb-3">
-                                            <label class="input-group-text">หน่วยงาน</label>
-                                            <input type="text" name="NoticeDepartment" class="form-control" value="กลุ่มงานพัสดุ" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="input-group mb-3">
-                                            <label class="input-group-text">สังกัด</label>
-                                            <input type="text" name="NoticeAgency" class="form-control" value="โรงพยาบาลหล่มสัก" readonly>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">ไฟล์เอกสารเดิม:</label><br>
-                                    <?php if (!empty($row['NoticeFile'])): ?>
-                                        <a href="../../assets/images/proNotice/<?= $row['NoticeFile'] ?>" target="_blank"><?= $row['NoticeFile'] ?></a><br>
-                                        <input type="checkbox" name="DeleteOldFile" value="1"> ลบไฟล์เดิม
-                                    <?php else: ?>
-                                        <span>ไม่มีไฟล์แนบ</span>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="NoticeFile" class="form-label">อัปโหลดไฟล์ใหม่</label>
-                                    <input type="file" name="NoticeFile" id="NoticeFile" class="form-control">
-                                </div>
-
-                                <div class="d-flex justify-content-end mt-3">
-                                    <button type="button" onclick="history.back()" class="btn btn-warning">กลับหน้าหลัก</button>
-                                    <button type="submit" name="upload" class="btn btn-success">บันทึกข้อมูล</button>
                                 </div>
                             </form>
+
                         </div>
                     </div>
+
                 </div>
             </main>
             <?php include("../../admin/include/footer.php"); ?>
@@ -152,9 +250,3 @@ function formatDateThai($strDate)
 </body>
 
 </html>
-
-<style>
-    .input-group-text {
-        min-width: 120px;
-    }
-</style>

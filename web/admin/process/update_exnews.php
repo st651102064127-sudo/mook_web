@@ -38,5 +38,11 @@ if (!empty($_FILES['ExtNewsFile']['name'])) {
 }
 
 mysqli_stmt_execute($stmt);
-header("Location: ../manage/manage_exnews.php");
+echo "
+    <script>
+    alert('เเก้ไขข้อมูลเรียบร้อย');
+    window.location= '../manage/manage_exnews.php';
+
+    </script>
+";
 ?>

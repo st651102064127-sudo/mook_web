@@ -1,53 +1,75 @@
 <?php
 session_start();
-error_reporting(error_reporting() && ~E_NOTICE);
+// ปิด Error Notice เพื่อไม่ให้กวนหน้าเว็บ แต่ยังแสดง Error ร้ายแรง
+error_reporting(E_ALL & ~E_NOTICE);
 
 date_default_timezone_set("Asia/Bangkok");
 $name = "e-PMS";
 
-
-$host = "db";          
+$host = "db";
 $user = "root";
-$pass = "123";          
+$pass = "123";
 $dbname = "db_supply";
 
-$conn = new mysqli($host, $user, $pass, $dbname); //connect db
-$conn->set_charset("utf8mb4"); //อักษร
+// เชื่อมต่อฐานข้อมูล
+$conn = new mysqli($host, $user, $pass, $dbname);
+$conn->set_charset("utf8mb4");
 
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+// ตรวจสอบการเชื่อมต่อ
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 
-
-if ($_SESSION["user_id"]) {
-    foreach ($conn->query("SELECT * FROM employee WHERE EmpID = $_SESSION[user_id] ") as $show_user_login);
+// 1. เช็ค Session (แก้ไขจาก user_id เป็น EmpID ให้ตรงกับตอน Login)
+if (isset($_SESSION["EmpID"])) {
+    $emp_id = $_SESSION["EmpID"];
+    $sql_user = "SELECT * FROM employee WHERE EmpID = '$emp_id'";
+    $result_user = $conn->query($sql_user);
+    if ($result_user->num_rows > 0) {
+        $show_user_login = $result_user->fetch_assoc();
+    }
 }
 
-if (isset($_GET["action"]) and $_GET["action"] == "login") {
+// 2. ฟังก์ชัน Login
+if (isset($_GET["action"]) && $_GET["action"] == "login") {
     $user_username = $_POST["EmpCod"];
     $user_pass = $_POST["EmpPass"];
-    $sql = "SELECT * FROM employee WHERE EmpCod = '$user_username' AND EmpPass = '$user_pass' ";
-    $result = $conn->query($sql);
+
+    // **แก้ไขความปลอดภัย: ใช้ Prepared Statement ป้องกัน SQL Injection**
+    $stmt = $conn->prepare("SELECT * FROM employee WHERE EmpCod = ? AND EmpPass = ?");
+    $stmt->bind_param("ss", $user_username, $user_pass);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
     if ($result->num_rows > 0) {
-        foreach ($result as $row);
+        $row = $result->fetch_assoc(); // ใช้ fetch_assoc แทน foreach
+
+        // ตั้งค่า Session
         $_SESSION["EmpID"] = $row["EmpID"];
         $_SESSION["EmpName"] = $row["EmpName"];
         $_SESSION["EmpEmail"] = $row["EmpEmail"];
         $_SESSION["EmpPhone"] = $row["EmpPhone"];
 
-        // เพิ่มการเข้าชม
-        $conn->query("INSERT INTO `tb_number_of_visitors`(`nov_id`, `nov_user_id`, `sale_time_slip`) VALUES (NULL,'$row[user_id]',NULL')");
-    }
+        // **แก้ไข Syntax Error ใน INSERT และใช้ตัวแปรให้ถูกต้อง**
+        // สมมติว่า nov_user_id คือ EmpID และ sale_time_slip ต้องการเวลาปัจจุบัน
+        $insert_sql = "INSERT INTO `tb_number_of_visitors` (`nov_id`, `nov_user_id`, `sale_time_slip`) 
+                       VALUES (NULL, '" . $row["EmpID"] . "', NOW())";
         
-?> 
+        $conn->query($insert_sql);
 
-<script>
-        history.back();
-    </script> <?php
-            }
-
-
-
-
-                ?>
-                
+        // Login สำเร็จ -> ไปหน้าแรก หรือหน้า Dashboard
+        echo "<script>
+            alert('เข้าสู่ระบบสำเร็จ');
+            window.location.href = 'index.php'; 
+        </script>";
+    } else {
+        // Login ไม่สำเร็จ
+        echo "<script>
+            alert('รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง');
+            window.history.back();
+        </script>";
+    }
+    
+    $stmt->close(); // ปิด statement
+}
+?>

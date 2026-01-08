@@ -1,0 +1,338 @@
+
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap');
+
+        :root {
+            --sky-top: #87CEEB;
+            --sky-bottom: #E0F7FA;
+            --ground: #E8F5E9;
+            --hospital-wall: #FFFFFF;
+            --hospital-shadow: #CFD8DC;
+            --window-glass: #B3E5FC;
+            --roof-color: #455A64;
+            --accent-red: #FF5252;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bottom) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        /* --- เมฆ --- */
+        .clouds {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            transition: transform 0.1s ease-out;
+        }
+
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 50px;
+            opacity: 0.9;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .cloud::after, .cloud::before {
+            content: '';
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+
+        .c1 { width: 120px; height: 40px; top: 20%; left: 15%; }
+        .c1::after { width: 50px; height: 50px; top: -25px; left: 20px; }
+        .c1::before { width: 40px; height: 40px; top: -15px; left: 55px; }
+        
+        .c2 { width: 100px; height: 35px; top: 15%; right: 20%; }
+        .c2::after { width: 40px; height: 40px; top: -20px; left: 15px; }
+
+        /* --- พื้นดิน --- */
+        .ground {
+            position: absolute;
+            bottom: -50px;
+            width: 100%;
+            height: 40%;
+            background: var(--ground);
+            border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+            z-index: 2;
+            transform: translateZ(50px);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.1s ease-out;
+        }
+
+        /* --- โรงพยาบาล --- */
+        .hospital-container {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            transition: transform 0.1s ease-out;
+        }
+
+        .building {
+            width: 400px;
+            height: 250px;
+            background: var(--hospital-wall);
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 20px 20px 0px var(--hospital-shadow);
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .roof {
+            position: absolute;
+            top: -40px;
+            left: -20px;
+            width: 440px;
+            height: 50px;
+            background: var(--roof-color);
+            border-radius: 5px;
+        }
+
+        .cross-symbol {
+            position: absolute;
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+        }
+        .cross-h { width: 100%; height: 12px; background: var(--accent-red); position: absolute; top: 14px; left: 0; border-radius: 2px; }
+        .cross-v { width: 12px; height: 100%; background: var(--accent-red); position: absolute; left: 14px; top: 0; border-radius: 2px; }
+
+        .window {
+            width: 50px;
+            height: 70px;
+            background: var(--window-glass);
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            border: 2px solid #fff;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .window::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #fff;
+            transform: translateY(-50%);
+        }
+
+        .main-door {
+            width: 80px;
+            height: 120px;
+            background: #37474F;
+            border-radius: 4px 4px 0 0;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 10px;
+        }
+        .door-handle {
+            width: 8px;
+            height: 8px;
+            background: #FFD700;
+            border-radius: 50%;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+        }
+
+        .hospital-sign {
+            position: absolute;
+            top: -110px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 3px solid #2196F3; /* เปลี่ยนสีขอบให้เข้มขึ้น */
+            min-width: 250px;
+            z-index: 10; /* ป้ายชื่อต้องอยู่บนสุด */
+        }
+        .hospital-sign h1 {
+            font-size: 1.2rem;
+            color: #333;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .hospital-sign p {
+            font-size: 0.8rem;
+            color: #777;
+            margin: 0;
+            font-weight: 300;
+        }
+
+        /* --- ต้นไม้ --- */
+        .trees {
+            position: absolute;
+            bottom: 15%;
+            width: 100%;
+            z-index: 4;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 5%;
+            transition: transform 0.1s ease-out;
+        }
+
+        .tree {
+            position: relative;
+            bottom: 0;
+        }
+        .trunk {
+            width: 20px;
+            height: 60px;
+            background: #8D6E63;
+            margin: 0 auto;
+            border-radius: 4px;
+        }
+        .leaves {
+            width: 80px;
+            height: 80px;
+            background: #81C784;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset -10px -10px 0 rgba(0,0,0,0.05);
+        }
+
+        /* --- UI Layer (แก้ไขส่วนนี้ครับ) --- */
+        .ui-layer {
+            position: absolute;
+            top: 30%; /* << ย้ายจาก 50% เป็น 30% เพื่อให้อยู่บนฟ้า ไม่ทับตึก */
+            left: 50%;
+            transform: translate(-50%, -50%) translateZ(100px);
+            z-index: 100; /* << ยก z-index ให้สูงสุด */
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        /* กล่องรองรับตัวอักษร (เพื่อให้อ่านง่ายขึ้น) */
+        .text-container {
+            background: rgba(255, 255, 255, 0.2); /* พื้นหลังโปร่งแสงเบาๆ */
+            backdrop-filter: blur(4px); /* เบลอพื้นหลังเล็กน้อย */
+            padding: 20px 40px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .welcome-text {
+            color: #fff; /* ตัวอักษรสีขาว */
+            font-size: 2.2rem;
+            font-weight: 800; /* ตัวหนาขึ้น */
+            margin: 0;
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.4); /* << เพิ่มเงาให้ตัวอักษรโดดเด่น */
+            letter-spacing: 1px;
+        }
+        
+        .welcome-sub {
+            color: #E3F2FD;
+            font-size: 1.2rem;
+            margin-top: 5px;
+            text-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .enter-btn {
+            pointer-events: auto;
+            background: linear-gradient(45deg, #1565C0, #42A5F5); /* สีน้ำเงินเข้มขึ้น */
+            border: none;
+            padding: 15px 45px;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.4rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(21, 101, 192, 0.5); /* เงาปุ่มเข้มขึ้น */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'Kanit', sans-serif;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .enter-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(21, 101, 192, 0.7);
+            background: linear-gradient(45deg, #0D47A1, #2196F3);
+        }
+
+        .enter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .enter-btn:hover::before {
+            left: 100%;
+        }
+
+        .footer-info {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #546E7A;
+            z-index: 5;
+            font-size: 0.9rem;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+
