@@ -1,123 +1,120 @@
-<!-- As a link -->
-<div class="p-0 m-0">
-  <div class="container-fluid">
-    <div class="text-end">
-      <!-- <span><a href="frminsert.php" class="text-dark btn fs-7 p-2">สร้างบัญชีผู้ใช้</a></span> -->
-      |
-      <span><a href="frmlogin.php" class="text-dark btn fs-7 p-2">ลงชื่อเข้าใช้</a></span>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top">
+    <div class="container">
+        
+        <a href="index.php" class="navbar-brand d-flex align-items-center">
+<img src="assets/images/icon/logo.png" alt="Logo" style="height: 80px; width: auto;" class="me-3">            <div class="d-flex flex-column">
+                <span class="fw-bold fs-5 text-white">Lomsak Hospital</span>
+                <span class="fs-7 text-white-50" style="font-size: 0.8rem;">ระบบบริหารจัดการพัสดุ</span>
+            </div>
+        </a>
+
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a href="main.php" class="nav-link px-3 active">
+                        <i class="fa-solid fa-house me-2"></i>หน้าหลัก
+                    </a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle px-3" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-bullhorn me-2"></i>ประกาศ/คำสั่ง
+                    </a>
+                    <ul class="dropdown-menu border-0 shadow-sm rounded-3 mt-2" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item py-2" href="frmBoard.php">กฎ/ระเบียบ/มติ ครม.</a></li>
+                        <li><a class="dropdown-item py-2" href="frmPronotice.php">ประกาศพัสดุ</a></li>
+                        <li><a class="dropdown-item py-2" href="frmProContract.php">สัญญาพัสดุ</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><a class="dropdown-item py-2" href="frmPhotoAlbum.php">ประมวลภาพกิจกรรม</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center">
+                <a href="frmlogin.php" class="btn btn-login">
+                    <i class="fa-solid fa-circle-user me-2"></i>ลงชื่อเข้าใช้
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-<nav class="navbar navbar-expand-md navbar-light bg-green-1 sticky-top">
-  <div class="container-fluid pt-2">
-    <a href="index.php" class="navbar-brand">
-
-      <img src="assets/images/icon/logonav.png" alt="Lomsak Hospital Logo" style="height: 50px;" class="me-2">
-
-    </a>
-    <button class="navbar-toggler" data-bs-target="#navbar" data-bs-toggle="collapse">เมนู</button>
-    <div class="collapse navbar-collapse" id="navbar">
-      <ul class="navbar-nav me-auto">
-
-        <li><a href="main.php" class="nav-link ">หน้าหลัก</a></li>
-
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            ประกาศ/คำสั่ง สำนักงานฯ
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="frmBoard.php">กฎ/ระเบียบ/มติ ครม. และหนังสือเวียน</a></li>
-            <li><a class="dropdown-item" href="frmPronotice.php">ประกาศพัสดุ</a></li>
-            <li><a class="dropdown-item" href="frmProContract.php">สัญญาพัสดุ</a></li>
-            <li><a class="dropdown-item" href="frmPhotoAlbum.php">กิจกรรม</a></li>
-          </ul>
-        </li>
-      </ul>
-
-
-      <!-- <form class="d-flex m-0 position-relative">
-        <input class="form-control w-100 rounded-pill" type="search" placeholder="ค้นหา" aria-label="Search" style="border-radius: 0;">
-        <button class="btn rounded-pill position-absolute end-0" type="submit" style="border-radius: 0;">🔎</button>
-      </form> -->
-
-    </div>
-  </div>
 </nav>
 
-
 <style>
-  .bg-green-1 {
-    background-color: #72ce87ff !important;
-    /* เลือกโค้ดสีที่ต้องการ */
-  }
+    /* ตั้งค่า Font หลัก */
+    body {
+        font-family: 'Kanit', sans-serif;
+    }
 
-  /* เพิ่มเงาและขอบโค้ง */
-  .modern-navbar {
-    border-radius: 0 0 20px 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-  }
+    /* 1. Navbar Design: ใช้สีเขียวแบบไล่เฉดให้ดูทันสมัย แต่ไม่ฉูดฉาด */
+    .custom-navbar {
+        background: linear-gradient(135deg, #198754 0%, #157347 100%);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+    }
 
-  /* เมื่อ scroll จะเพิ่มความเข้มของเงา */
-  .modern-navbar.scrolled {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    background-color: #66c87a !important;
-  }
+    /* 2. Menu Links: ตัด Animation ขยับออก เน้นการเปลี่ยนสีที่นุ่มนวล */
+    .navbar-nav .nav-link {
+        color: rgba(255, 255, 255, 0.85) !important;
+        font-weight: 400;
+        font-size: 1rem;
+        transition: color 0.2s ease-in-out, background-color 0.2s;
+        border-radius: 8px;
+        margin: 0 4px;
+    }
 
-  /* Logo */
-  .navbar-logo {
-    height: 45px;
-    transition: transform 0.3s ease;
-  }
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link.active {
+        color: #ffffff !important;
+        background-color: rgba(255, 255, 255, 0.1); /* พื้นหลังจางๆ เมื่อเอาเมาส์ชี้ */
+    }
 
-  .navbar-logo:hover {
-    transform: scale(1.05);
-  }
+    /* 3. Dropdown Menu: สะอาดตา ไม่มีเงาฟุ้งเกินไป */
+    .dropdown-menu {
+        min-width: 220px;
+        border: 1px solid rgba(0,0,0,0.05); /* ขอบบางๆ */
+    }
 
-  /* ลิงก์เมนู */
-  .navbar-nav .nav-link {
-    color: #000 !important;
-    font-weight: 500;
-    margin: 0 6px;
-    transition: all 0.3s ease;
-    border-radius: 10px;
-    padding: 6px 12px;
-  }
+    .dropdown-item {
+        color: #495057;
+        font-size: 0.95rem;
+        transition: background-color 0.2s;
+    }
 
-  .navbar-nav .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.4);
-    color: #000;
-    transform: translateY(-2px);
-  }
+    .dropdown-item:hover {
+        background-color: #f8f9fa; /* สีเทาอ่อนมากๆ */
+        color: #198754; /* ตัวหนังสือเปลี่ยนเป็นสีเขียว */
+        font-weight: 500;
+    }
 
-  /* ปุ่มผู้ใช้ด้านบน */
-  .user-btn {
-    color: #000 !important;
-    font-weight: 500;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    transition: all 0.3s ease;
-  }
+    /* 4. Login Button: เรียบหรู พื้นขาว ตัดขอบมน */
+    .btn-login {
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #198754;
+        font-weight: 500;
+        border-radius: 50px; /* ทรงแคปซูล */
+        padding: 8px 24px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-  .user-btn:hover {
-    background-color: rgba(255, 255, 255, 0.8);
-    transform: scale(1.05);
-  }
+    .btn-login:hover {
+        background-color: #ffffff;
+        color: #146c43;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-1px); /* ขยับขึ้นนิดเดียวมากๆ เพื่อให้รู้ว่ากดได้ */
+    }
 
-  /* กล่องค้นหา */
-  .search-box input {
-    border: none;
-    outline: none;
-    transition: box-shadow 0.3s ease;
-  }
-
-  .search-box input:focus {
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Topbar */
-  .topbar {
-    background: #f8f9fa;
-    border-bottom: 1px solid #ddd;
-  }
+    /* Mobile Toggle Adjust */
+    .navbar-toggler:focus {
+        box-shadow: none;
+    }
 </style>
