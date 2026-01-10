@@ -1,14 +1,19 @@
 <?php
 include "../../assets/connect_db/connect_db.php";
- include "../../assets/check_login_admin/check_login_admin.php";
+include "../../assets/check_login_admin/check_login_superAdmin.php";
 
- $id = $_GET['id'];
- $sql = "SELECT * FROM employee WHERE EmpID = ?";
- $stmt = mysqli_prepare($conn, $sql);
+$id = $_GET['id'];
+$sql = "SELECT * FROM employee WHERE EmpID = ?";
+$stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "i", $id);
 mysqli_stmt_execute($stmt);
- $result = mysqli_stmt_get_result($stmt);
- $row = mysqli_fetch_assoc($result);
+$result = mysqli_stmt_get_result($stmt);
+$row = mysqli_fetch_assoc($result);
+
+if (!$row) {
+    echo "<script>alert('ไม่พบข้อมูลเจ้าหน้าที่'); window.location='../manage/manage_employee.php';</script>";
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -16,12 +21,9 @@ mysqli_stmt_execute($stmt);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แก้ไขข้อมูลเจ้าหน้าที่</title>
-    <!-- เรียกใช้ Font Kanit -->
+    <title>แก้ไขข้อมูลเจ้าหน้าที่ - ระบบจัดการ</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <?php include("../../admin/include/header.php"); ?>
@@ -32,7 +34,7 @@ mysqli_stmt_execute($stmt);
             background-color: #f0f2f5;
         }
 
-        /* --- Header Section --- */
+        /* --- Header Section (ทางเดียวกันกับหน้าเพิ่ม) --- */
         .page-header-card {
             background: linear-gradient(135deg, #064020 0%, #0d5e3a 100%);
             color: white;
@@ -54,14 +56,14 @@ mysqli_stmt_execute($stmt);
             transform: rotate(-15deg);
         }
 
-        /* --- Main Form Card (Full Width) --- */
+        /* --- Main Form Card --- */
         .main-form-card {
             border: none;
             border-radius: 16px;
             box-shadow: 0 5px 25px rgba(0,0,0,0.05);
             background: #fff;
             overflow: hidden;
-            width: 100%; /* เต็มที่ */
+            width: 100%; 
         }
         .card-header-custom {
             background-color: #fff;
@@ -90,7 +92,7 @@ mysqli_stmt_execute($stmt);
             font-size: 0.9rem;
         }
 
-        /* --- Inputs & Floating Labels --- */
+        /* --- Inputs & Icons --- */
         .form-floating > .form-control {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
@@ -122,10 +124,6 @@ mysqli_stmt_execute($stmt);
             border-radius: 8px;
             padding-left: 2.5rem;
         }
-        .form-select:focus {
-            border-color: #198754;
-            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
-        }
 
         /* --- Buttons --- */
         .btn-cancel {
@@ -136,10 +134,6 @@ mysqli_stmt_execute($stmt);
             padding: 10px 25px;
             font-weight: 500;
         }
-        .btn-cancel:hover {
-            background-color: #e2e6ea;
-            color: #495057;
-        }
         .btn-save {
             background: linear-gradient(90deg, #198754 0%, #146c43 100%);
             color: white;
@@ -148,15 +142,10 @@ mysqli_stmt_execute($stmt);
             padding: 10px 30px;
             font-weight: 500;
             box-shadow: 0 4px 6px rgba(25, 135, 84, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: 0.2s;
         }
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(25, 135, 84, 0.3);
-            color: white;
-        }
+        .btn-save:hover { transform: translateY(-2px); color: white; }
 
-        /* --- Password Section (Edit Mode) --- */
         .password-section {
             background-color: #f9f9f9;
             border: 1px dashed #ced4da;
@@ -175,7 +164,6 @@ mysqli_stmt_execute($stmt);
         <div id="layoutSidenav_content">
             <main class="container-fluid px-4">
                 
-                <!-- Header Card -->
                 <div class="row mt-4 mb-4">
                     <div class="col-12">
                         <div class="card page-header-card p-4">
@@ -184,9 +172,8 @@ mysqli_stmt_execute($stmt);
                                     <h3 class="fw-bold mb-2"><i class="fas fa-user-edit me-2"></i>แก้ไขข้อมูลเจ้าหน้าที่</h3>
                                     <nav aria-label="breadcrumb">
                                         <ol class="breadcrumb mb-0">
-                                            <li class="breadcrumb-item"><a href="../manage/Employee.php"><i class="fas fa-home me-1"></i> หน้าหลัก</a></li>
                                             <li class="breadcrumb-item"><a href="../manage/manage_employee.php">รายการเจ้าหน้าที่</a></li>
-                                            <li class="breadcrumb-item active" aria-current="page">แก้ไขข้อมูล</li>
+                                            <li class="breadcrumb-item active" aria-current="page">ID: <?= $row['EmpID'] ?></li>
                                         </ol>
                                     </nav>
                                 </div>
@@ -196,7 +183,6 @@ mysqli_stmt_execute($stmt);
                     </div>
                 </div>
 
-                <!-- Main Form Card (Full Width) -->
                 <div class="row pb-5">
                     <div class="col-12">
                         <form action="../../admin/process/update_employee.php" method="post" class="needs-validation" novalidate>
@@ -204,103 +190,99 @@ mysqli_stmt_execute($stmt);
 
                             <div class="card main-form-card">
                                 <div class="card-header-custom">
-                                    <h5 class="m-0 fw-bold text-dark">แก้ไขรายละเอียดข้อมูล</h5>
-                                    <small class="text-muted">ปรับปรุงข้อมูลส่วนตัวและข้อมูลการทำงาน</small>
+                                    <h5 class="m-0 fw-bold text-dark">ปรับปรุงรายละเอียดข้อมูล</h5>
+                                    <small class="text-muted">ตรวจสอบและแก้ไขข้อมูลให้เป็นปัจจุบัน</small>
                                 </div>
                                 
                                 <div class="card-body p-5">
                                     
-                                    <!-- Section 1: Personal Info -->
                                     <div class="section-title">
                                         <i class="fas fa-user"></i> 1. ข้อมูลส่วนตัว
                                     </div>
                                     <div class="row g-4 mb-5">
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="EmpName" id="EmpName" required class="form-control" 
-                                                    value="<?= htmlspecialchars($row['EmpName']) ?>" placeholder="ชื่อ-นามสกุล" required>
-                                                <label for="EmpName">ชื่อ - นามสกุล</label>
+                                                <input type="text" name="name" id="name" required class="form-control" 
+                                                    value="<?= htmlspecialchars($row['EmpName']) ?>" placeholder="ชื่อ-นามสกุล">
+                                                <label for="name">ชื่อ - นามสกุล</label>
                                                 <i class="fas fa-user input-icon"></i>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="email" name="EmpEmail" id="EmpEmail" required class="form-control" 
-                                                    value="<?= htmlspecialchars($row['EmpEmail']) ?>" placeholder="อีเมล" required>
-                                                <label for="EmpEmail">อีเมล</label>
+                                                <input type="email" name="email" id="email" required class="form-control" 
+                                                    value="<?= htmlspecialchars($row['EmpEmail']) ?>" placeholder="อีเมล">
+                                                <label for="email">อีเมล</label>
                                                 <i class="fas fa-envelope input-icon"></i>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="EmpPhone" id="EmpPhone" required class="form-control" 
+                                                <input type="text" name="tel" id="tel" required class="form-control" 
                                                     value="<?= htmlspecialchars($row['EmpPhone']) ?>" maxlength="10" pattern="[0-9]{10}" placeholder="เบอร์โทร">
-                                                <label for="EmpPhone">เบอร์โทรศัพท์</label>
+                                                <label for="tel">เบอร์โทรศัพท์</label>
                                                 <i class="fas fa-phone input-icon"></i>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Section 2: Work Info -->
                                     <div class="section-title">
                                         <i class="fas fa-briefcase"></i> 2. ข้อมูลการทำงาน
                                     </div>
                                     <div class="row g-4 mb-5">
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="EmpCod" id="EmpCod" required class="form-control bg-light" 
-                                                    value="<?= htmlspecialchars($row['EmpCod']) ?>" placeholder="รหัสพนักงาน" readonly style="cursor: not-allowed;">
-                                                <label for="EmpCod">รหัสพนักงาน (อ่านอย่างเดียว)</label>
+                                                <input type="text" name="EmpCod" id="EmpCod" class="form-control bg-light" 
+                                                    value="<?= htmlspecialchars($row['EmpCod']) ?>" readonly style="cursor: not-allowed;">
+                                                <label for="EmpCod">รหัสพนักงาน (ไม่อนุญาตให้แก้ไข)</label>
                                                 <i class="fas fa-hashtag input-icon"></i>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <select name="EmpPosition" id="EmpPosition" class="form-select" required>
-                                                    <option value="" disabled>เลือกตำแหน่ง...</option>
-                                                    <option value="เจ้าหน้าที่พัสดุ" <?= $row['EmpPosition'] == 'เจ้าหน้าที่พัสดุ' ? 'selected' : '' ?>>เจ้าหน้าที่พัสดุ</option>
-                                                    <option value="หัวหน้าเจ้าหน้าที่พัสดุ" <?= $row['EmpPosition'] == 'หัวหน้าเจ้าหน้าที่พัสดุ' ? 'selected' : '' ?>>หัวหน้าเจ้าหน้าที่พัสดุ</option>
-                                                    <option value="Admin" <?= $row['EmpPosition'] == 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                                <select name="position" id="position" class="form-select" required>
+                                                    <option value="เจ้าหน้าที่พัสดุ" <?= ($row['EmpPosition'] == 'เจ้าหน้าที่พัสดุ') ? 'selected' : '' ?>>เจ้าหน้าที่พัสดุ</option>
+                                                    <option value="หัวหน้าเจ้าหน้าที่พัสดุ" <?= ($row['EmpPosition'] == 'หัวหน้าเจ้าหน้าที่พัสดุ') ? 'selected' : '' ?>>หัวหน้าเจ้าหน้าที่พัสดุ</option>
+                                                    <option value="Admin" <?= ($row['EmpPosition'] == 'Admin') ? 'selected' : '' ?>>Admin</option>
                                                 </select>
-                                                <label for="EmpPosition">ตำแหน่ง</label>
+                                                <label for="position">ตำแหน่ง</label>
                                                 <i class="fas fa-id-badge input-icon"></i>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <select name="EmpRole" id="EmpRole" class="form-select" required>
-                                                    <option value="Admin" <?= $row['EmpRole'] == 'Admin' ? 'selected' : '' ?>>ผู้ดูแลระบบ (Admin)</option>
-                                                    <option value="Member" <?= $row['EmpRole'] == 'Member' ? 'selected' : '' ?>>ผู้ใช้งานทั่วไป (Member)</option>
+                                                <select name="role" id="role" class="form-select" required>
+                                                    <option value="Member" <?= ($row['EmpRole'] == 'Member') ? 'selected' : '' ?>>Member (เจ้าหน้าที่ทั่วไป)</option>
+                                                    <option value="Admin" <?= ($row['EmpRole'] == 'Admin') ? 'selected' : '' ?>>Admin (ผู้ดูแลระบบ)</option>
                                                 </select>
-                                                <label for="EmpRole">สิทธิ์การใช้งาน</label>
+                                                <label for="role">สิทธิ์การเข้าถึงระบบ (Role)</label>
                                                 <i class="fas fa-user-shield input-icon"></i>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="EmpDepartment" id="EmpDepartment" required class="form-control" 
+                                                <input type="text" name="department" id="department" required class="form-control" 
                                                     value="<?= htmlspecialchars($row['EmpDepartment']) ?>" placeholder="ฝ่ายงาน">
-                                                <label for="EmpDepartment">หน่วยงาน / ฝ่าย</label>
+                                                <label for="department">หน่วยงาน / ฝ่าย</label>
                                                 <i class="fas fa-building input-icon"></i>
                                             </div>
                                         </div>
 
                                         <div class="col-md-6 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="EmpAgency" id="EmpAgency" required class="form-control" 
+                                                <input type="text" name="agency" id="agency" required class="form-control" 
                                                     value="<?= htmlspecialchars($row['EmpAgency']) ?>" placeholder="สังกัด">
-                                                <label for="EmpAgency">สังกัด</label>
+                                                <label for="agency">สังกัด</label>
                                                 <i class="fas fa-hospital input-icon"></i>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Section 3: Password -->
                                     <div class="password-section">
                                         <div class="d-flex align-items-center mb-3">
                                             <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 30px; height: 30px;">
@@ -308,14 +290,14 @@ mysqli_stmt_execute($stmt);
                                             </div>
                                             <h6 class="m-0 fw-bold text-secondary">3. เปลี่ยนรหัสผ่าน</h6>
                                         </div>
-                                        <p class="text-muted small mb-3">เว้นว่างหากไม่ต้องการเปลี่ยนรหัสผ่าน</p>
+                                        <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>เว้นว่างไว้หากไม่ต้องการเปลี่ยนแปลงรหัสผ่านเดิม</p>
                                         
                                         <div class="row g-3">
                                             <div class="col-md-6 position-relative">
                                                 <div class="input-group">
                                                     <div class="form-floating flex-grow-1">
-                                                        <input type="password" name="EmpPassword" id="EmpPassword" class="form-control border-end-0" placeholder="รหัสผ่านใหม่" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                                                        <label for="EmpPassword" style="padding-left: 1rem;">รหัสผ่านใหม่</label>
+                                                        <input type="password" name="password" id="password" class="form-control border-end-0" placeholder="รหัสผ่านใหม่" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                                        <label for="password">รหัสผ่านใหม่</label>
                                                         <i class="fas fa-lock input-icon"></i>
                                                     </div>
                                                     <button type="button" class="btn btn-outline-secondary bg-light" onclick="togglePassword()" style="border-left: 0;">
@@ -323,11 +305,10 @@ mysqli_stmt_execute($stmt);
                                                     </button>
                                                 </div>
                                             </div>
-
-                                            <div class="col-md-6 position-relative">
+                                            <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input type="password" name="EmpPasswordConfirm" id="EmpPasswordConfirm" class="form-control" placeholder="ยืนยันรหัสผ่านใหม่">
-                                                    <label for="EmpPasswordConfirm" style="padding-left: 1rem;">ยืนยันรหัสผ่านใหม่</label>
+                                                    <input type="password" name="password_confirm" id="password_confirm" class="form-control" placeholder="ยืนยันรหัสผ่าน">
+                                                    <label for="password_confirm">ยืนยันรหัสผ่านใหม่</label>
                                                     <i class="fas fa-check-double input-icon"></i>
                                                 </div>
                                             </div>
@@ -336,13 +317,12 @@ mysqli_stmt_execute($stmt);
 
                                 </div>
 
-                                <!-- Footer Actions -->
                                 <div class="card-footer bg-light border-0 p-4 text-end d-flex justify-content-end gap-2">
                                     <a href="../manage/manage_employee.php" class="btn btn-cancel">
                                         <i class="fas fa-times me-1"></i> ยกเลิก
                                     </a>
-                                    <button type="submit" class="btn btnSave">
-                                        <i class="fas fa-save me-1"></i> บันทึกข้อมูล
+                                    <button type="submit" class="btn btn-save">
+                                        <i class="fas fa-save me-1"></i> ยืนยันการแก้ไข
                                     </button>
                                 </div>
                             </div>
@@ -358,40 +338,30 @@ mysqli_stmt_execute($stmt);
     <?php include("../include/script.php"); ?>
 
     <script>
-        // ฟังก์ชันเปิด/ปิดตาดูรหัสผ่าน
         function togglePassword() {
-            const pwd = document.getElementById("EmpPassword");
-            const pwdConf = document.getElementById("EmpPasswordConfirm");
+            const pwd = document.getElementById("password");
+            const pwdConf = document.getElementById("password_confirm");
             const icon = document.getElementById("eye-icon");
             
             if (pwd.type === "password") {
                 pwd.type = "text";
                 pwdConf.type = "text";
-                icon.classList.remove("fa-eye");
-                icon.classList.add("fa-eye-slash");
+                icon.classList.replace("fa-eye", "fa-eye-slash");
             } else {
                 pwd.type = "password";
                 pwdConf.type = "password";
-                icon.classList.remove("fa-eye-slash");
-                icon.classList.add("fa-eye");
+                icon.classList.replace("fa-eye-slash", "fa-eye");
             }
         }
 
         // ตรวจสอบรหัสผ่านก่อน Submit
         document.querySelector("form").addEventListener("submit", function(e) {
-            const pass = document.getElementById("EmpPassword").value;
-            const confirm = document.getElementById("EmpPasswordConfirm").value;
+            const pass = document.getElementById("password").value;
+            const confirm = document.getElementById("password_confirm").value;
 
-            if (pass) {
-                if (pass.length < 6) {
-                    alert("❗ รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร");
-                    e.preventDefault();
-                    return;
-                }
-                if (pass !== confirm) {
-                    alert("❗ รหัสผ่านยืนยันไม่ตรงกัน");
-                    e.preventDefault();
-                }
+            if (pass && pass !== confirm) {
+                alert("❗ รหัสผ่านยืนยันไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง");
+                e.preventDefault();
             }
         });
     </script>

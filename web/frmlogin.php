@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if (password_verify($password, $row['EmpPass'])) {
 
                     // ✅ ตรวจสอบ Role ว่าเป็น Member หรือไม่
-                    if ($row['EmpRole'] === "Member") {
+                    if ($row['EmpRole'] === "Member" || $row['EmpRole'] === "Admin") {
 
                         $_SESSION["user_id"]   = $row['EmpID'];
                         $_SESSION["user_name"] = $row['EmpName'];
@@ -146,7 +146,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (redirectUrl) {
                 setTimeout(function() {
                     window.location.href = redirectUrl;
-                }, 500);
+                }, 2000);
             }
         });
 

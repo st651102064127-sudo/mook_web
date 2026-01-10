@@ -1,0 +1,162 @@
+  body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        /* --- Header Section --- */
+        .page-header-card {
+            background: linear-gradient(135deg, #064020 0%, #0d5e3a 100%);
+            color: white;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 20px rgba(6, 64, 32, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .breadcrumb-item a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #fff;
+        }
+
+        .breadcrumb-item.active {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .header-icon-bg {
+            position: absolute;
+            right: -20px;
+            bottom: -20px;
+            font-size: 10rem;
+            opacity: 0.1;
+            transform: rotate(-15deg);
+        }
+
+        /* --- Main Form Card (Full Width) --- */
+        .main-form-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+            background: #fff;
+            overflow: hidden;
+            /* ไม่จำกัดความกว้าง เพื่อให้เต็มที่ */
+            width: 100%;
+        }
+
+        .card-header-custom {
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem;
+        }
+
+        .section-title {
+            color: #064020;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px dashed #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            background: #e8f5e9;
+            color: #2e7d32;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* --- Inputs & Floating Labels --- */
+        .form-floating>.form-control {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem 0.75rem 1rem 2.5rem;
+            height: auto;
+        }
+
+        .form-floating>.form-control:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
+        }
+
+        .form-floating>label {
+            padding-left: 2.5rem;
+            color: #6c757d;
+        }
+
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            z-index: 5;
+            transition: 0.3s;
+        }
+
+        .form-control:focus~.input-icon {
+            color: #198754;
+        }
+
+        .form-select {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding-left: 2.5rem;
+        }
+
+        .form-select:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
+        }
+
+        /* --- Buttons --- */
+        .btn-cancel {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px 25px;
+            font-weight: 500;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e2e6ea;
+            color: #495057;
+        }
+
+        .btn-save {
+            background: linear-gradient(90deg, #198754 0%, #146c43 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 30px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(25, 135, 84, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(25, 135, 84, 0.3);
+            color: white;
+        }
+
+        /* --- Password Section --- */
+        .password-section {
+            background-color: #f0fff4;
+            border: 1px dashed #a3e4d7;
+            border-radius: 12px;
+            padding: 20px;
+        }

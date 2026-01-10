@@ -1,6 +1,8 @@
 <?php
 // session_start();
 include "../../assets/connect_db/connect_db.php";
+include "../../assets/check_login_admin/check_login_superAdmin.php";
+
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -13,11 +15,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $agency     = trim($_POST['agency']);
     $EmpCod     = trim($_POST['EmpCod']);
     $password   = trim($_POST['password']);
+    $role       = trim($_POST['role'] ?? ''); // ✅ รับค่า Role ที่เพิ่มมาจากฟอร์ม
 
     // 🔴 2. เพิ่ม Logic ตรวจสอบค่าว่าง (Validation) 🔴
-    // หากฟิลด์สำคัญเป็นค่าว่าง (หรือมีแค่เว้นวรรค) ให้แจ้งเตือนทันที
+    // เพิ่มการตรวจสอบ $role เข้าไปด้วย
     if (empty($name) || empty($email) || empty($tel) || empty($position) || 
-        empty($department) || empty($agency) || empty($EmpCod) || empty($password)) {
+        empty($department) || empty($agency) || empty($EmpCod) || empty($password) || empty($role)) {
         echo "
             <script>
                 alert('❗ กรุณากรอกข้อมูลให้ครบถ้วน ห้ามเว้นว่าง');
@@ -30,14 +33,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // เข้ารหัสรหัสผ่าน
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    // กำหนดค่าพื้นฐาน
-    // หมายเหตุ: คุณอาจต้องปรับ Logic ตรงนี้ ถ้าอยากให้เลือก Role ได้จากฟอร์ม (ตอนนี้ Fix เป็น Member)
-    $EmpRole       = "Member"; 
-    
-    // ถ้าตำแหน่งเป็น Admin อาจจะกำหนด Role เป็น Admin อัตโนมัติ (Optional Logic)
-    if ($position === 'Admin') {
-        $EmpRole = 'Admin';
-    }
+    // กำหนดค่าบทบาทผู้ใช้งาน (EmpRole)
+    // ✅ เปลี่ยนจากเดิมที่ Fix เป็น Member ให้ใช้ค่าที่เลือกมาจากฟอร์มโดยตรง
+    $EmpRole = $role; 
 
     $EmpLastLogin  = NULL;
     $ResetToken    = NULL;

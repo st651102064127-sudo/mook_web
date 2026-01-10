@@ -1,6 +1,10 @@
-<?php include "../../assets/connect_db/connect_db.php"; ?>
+<?php include "../../assets/connect_db/connect_db.php"; 
+include "../../assets/check_login_admin/check_login_superAdmin.php";
+
+?>
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,148 +15,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link rel="stylesheet" href="./style/employee.css">
     <?php include("../../admin/include/header.php"); ?>
 
-    <style>
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #f0f2f5;
-        }
-
-        /* --- Header Section --- */
-        .page-header-card {
-            background: linear-gradient(135deg, #064020 0%, #0d5e3a 100%);
-            color: white;
-            border-radius: 16px;
-            border: none;
-            box-shadow: 0 10px 20px rgba(6, 64, 32, 0.2);
-            overflow: hidden;
-            position: relative;
-        }
-        .breadcrumb-item a { color: rgba(255,255,255,0.7); text-decoration: none; transition: 0.3s; }
-        .breadcrumb-item a:hover { color: #fff; }
-        .breadcrumb-item.active { color: #fff; font-weight: 500; }
-        .header-icon-bg {
-            position: absolute;
-            right: -20px;
-            bottom: -20px;
-            font-size: 10rem;
-            opacity: 0.1;
-            transform: rotate(-15deg);
-        }
-
-        /* --- Main Form Card (Full Width) --- */
-        .main-form-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.05);
-            background: #fff;
-            overflow: hidden;
-            /* ไม่จำกัดความกว้าง เพื่อให้เต็มที่ */
-            width: 100%; 
-        }
-        .card-header-custom {
-            background-color: #fff;
-            border-bottom: 1px solid #eee;
-            padding: 1.5rem;
-        }
-        .section-title {
-            color: #064020;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px dashed #e0e0e0;
-            display: flex;
-            align-items: center;
-        }
-        .section-title i {
-            background: #e8f5e9;
-            color: #2e7d32;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            margin-right: 10px;
-            font-size: 0.9rem;
-        }
-
-        /* --- Inputs & Floating Labels --- */
-        .form-floating > .form-control {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 1rem 0.75rem 1rem 2.5rem;
-            height: auto;
-        }
-        .form-floating > .form-control:focus {
-            border-color: #198754;
-            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
-        }
-        .form-floating > label {
-            padding-left: 2.5rem;
-            color: #6c757d;
-        }
-        .input-icon {
-            position: absolute;
-            top: 50%;
-            left: 15px;
-            transform: translateY(-50%);
-            color: #adb5bd;
-            z-index: 5;
-            transition: 0.3s;
-        }
-        .form-control:focus ~ .input-icon {
-            color: #198754;
-        }
-        .form-select {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding-left: 2.5rem;
-        }
-        .form-select:focus {
-            border-color: #198754;
-            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
-        }
-
-        /* --- Buttons --- */
-        .btn-cancel {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 10px 25px;
-            font-weight: 500;
-        }
-        .btn-cancel:hover {
-            background-color: #e2e6ea;
-            color: #495057;
-        }
-        .btn-save {
-            background: linear-gradient(90deg, #198754 0%, #146c43 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 30px;
-            font-weight: 500;
-            box-shadow: 0 4px 6px rgba(25, 135, 84, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(25, 135, 84, 0.3);
-            color: white;
-        }
-
-        /* --- Password Section --- */
-        .password-section {
-            background-color: #f0fff4;
-            border: 1px dashed #a3e4d7;
-            border-radius: 12px;
-            padding: 20px;
-        }
-    </style>
 </head>
 
 <body class="sb-nav-fixed">
@@ -163,18 +28,22 @@
 
         <div id="layoutSidenav_content">
             <main class="container-fluid px-4">
-                
+
                 <!-- Header Card -->
                 <div class="row mt-4 mb-4">
                     <div class="col-12">
                         <div class="card page-header-card p-4">
-                            <div class="card-body d-flex justify-content-between align-items-center position-relative z-1">
+                            <div
+                                class="card-body d-flex justify-content-between align-items-center position-relative z-1">
                                 <div>
-                                    <h3 class="fw-bold mb-2"><i class="fas fa-user-plus me-2"></i>เพิ่มเจ้าหน้าที่ใหม่</h3>
+                                    <h3 class="fw-bold mb-2"><i class="fas fa-user-plus me-2"></i>เพิ่มเจ้าหน้าที่ใหม่
+                                    </h3>
                                     <nav aria-label="breadcrumb">
                                         <ol class="breadcrumb mb-0">
-                                            <li class="breadcrumb-item"><a href="../manage/Employee.php"><i class="fas fa-home me-1"></i> หน้าหลัก</a></li>
-                                            <li class="breadcrumb-item"><a href="../manage/manage_employee.php">รายการเจ้าหน้าที่</a></li>
+                                            <li class="breadcrumb-item"><a href="../manage/Employee.php"><i
+                                                        class="fas fa-home me-1"></i> หน้าหลัก</a></li>
+                                            <li class="breadcrumb-item"><a
+                                                    href="../manage/manage_employee.php">รายการเจ้าหน้าที่</a></li>
                                             <li class="breadcrumb-item active" aria-current="page">เพิ่มข้อมูล</li>
                                         </ol>
                                     </nav>
@@ -188,16 +57,17 @@
                 <!-- Main Form Card (Full Width) -->
                 <div class="row pb-5">
                     <div class="col-12">
-                        <form action="../../admin/process/insert_employee.php" method="post" class="needs-validation" novalidate>
-                            
+                        <form action="../../admin/process/insert_employee.php" method="post" class="needs-validation"
+                            novalidate>
+
                             <div class="card main-form-card">
                                 <div class="card-header-custom">
                                     <h5 class="m-0 fw-bold text-dark">ลงทะเบียนเจ้าหน้าที่ใหม่</h5>
                                     <small class="text-muted">กรอกข้อมูลรายละเอียดเพื่อเข้าสู่ระบบ</small>
                                 </div>
-                                
+
                                 <div class="card-body p-5">
-                                    
+
                                     <!-- Section 1: Personal Info -->
                                     <div class="section-title">
                                         <i class="fas fa-user"></i> 1. ข้อมูลส่วนตัว
@@ -205,7 +75,8 @@
                                     <div class="row g-4 mb-5">
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="name" id="name" required class="form-control" placeholder="ชื่อ-นามสกุล">
+                                                <input type="text" name="name" id="name" required class="form-control"
+                                                    placeholder="ชื่อ-นามสกุล">
                                                 <label for="name">ชื่อ - นามสกุล</label>
                                                 <i class="fas fa-user input-icon"></i>
                                             </div>
@@ -213,7 +84,8 @@
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="email" name="email" id="email" required class="form-control" placeholder="name@example.com">
+                                                <input type="email" name="email" id="email" required
+                                                    class="form-control" placeholder="name@example.com">
                                                 <label for="email">อีเมล</label>
                                                 <i class="fas fa-envelope input-icon"></i>
                                             </div>
@@ -221,7 +93,8 @@
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="tel" id="tel" required class="form-control" maxlength="10" pattern="[0-9]{10}" placeholder="เบอร์โทร">
+                                                <input type="text" name="tel" id="tel" required class="form-control"
+                                                    maxlength="10" pattern="[0-9]{10}" placeholder="เบอร์โทร">
                                                 <label for="tel">เบอร์โทรศัพท์</label>
                                                 <i class="fas fa-phone input-icon"></i>
                                             </div>
@@ -235,7 +108,8 @@
                                     <div class="row g-4 mb-5">
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="EmpCod" id="EmpCod" required class="form-control" placeholder="รหัสพนักงาน">
+                                                <input type="text" name="EmpCod" id="EmpCod" required
+                                                    class="form-control" placeholder="รหัสพนักงาน">
                                                 <label for="EmpCod">รหัสพนักงาน</label>
                                                 <i class="fas fa-hashtag input-icon"></i>
                                             </div>
@@ -246,7 +120,8 @@
                                                 <select name="position" id="position" class="form-select" required>
                                                     <option value="" selected disabled>เลือกตำแหน่ง...</option>
                                                     <option value="เจ้าหน้าที่พัสดุ">เจ้าหน้าที่พัสดุ</option>
-                                                    <option value="หัวหน้าเจ้าหน้าที่พัสดุ">หัวหน้าเจ้าหน้าที่พัสดุ</option>
+                                                    <option value="หัวหน้าเจ้าหน้าที่พัสดุ">หัวหน้าเจ้าหน้าที่พัสดุ
+                                                    </option>
                                                     <option value="Admin">ผู้ดูแลระบบ (Admin)</option>
                                                 </select>
                                                 <label for="position">ตำแหน่ง</label>
@@ -256,7 +131,8 @@
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="department" id="department" required class="form-control" placeholder="ฝ่ายงาน" value="กลุ่มงานพัสดุ">
+                                                <input type="text" name="department" id="department" required
+                                                    class="form-control" placeholder="ฝ่ายงาน" value="กลุ่มงานพัสดุ">
                                                 <label for="department">หน่วยงาน / ฝ่าย</label>
                                                 <i class="fas fa-building input-icon"></i>
                                             </div>
@@ -264,9 +140,23 @@
 
                                         <div class="col-md-6 col-lg-4 position-relative">
                                             <div class="form-floating">
-                                                <input type="text" name="agency" id="agency" required class="form-control" placeholder="หน่วยงาน" value="โรงพยาบาลหล่มสัก">
+                                                <input type="text" name="agency" id="agency" required
+                                                    class="form-control" placeholder="หน่วยงาน"
+                                                    value="โรงพยาบาลหล่มสัก">
                                                 <label for="agency">สังกัด</label>
                                                 <i class="fas fa-hospital input-icon"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4 position-relative">
+                                            <div class="form-floating">
+                                                <select name="role" id="role" class="form-select" required>
+                                                    <option value="" selected disabled>เลือกสิทธิ์การใช้งาน...</option>
+                                                    <option value="Member">Member (เจ้าหน้าที่ทั่วไป)</option>
+                                                    <option value="Admin">Admin (ผู้ดูแลระบบ)</option>
+                                                </select>
+                                                <label for="role">สิทธิ์การเข้าถึงระบบ (Role)</label>
+                                                <i class="fas fa-user-shield input-icon"></i>
+                                                <div class="invalid-feedback">กรุณาเลือกสิทธิ์การใช้งาน</div>
                                             </div>
                                         </div>
                                     </div>
@@ -274,7 +164,8 @@
                                     <!-- Section 3: Security -->
                                     <div class="password-section">
                                         <div class="d-flex align-items-center mb-3">
-                                            <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 30px; height: 30px;">
+                                            <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center me-2"
+                                                style="width: 30px; height: 30px;">
                                                 <i class="fas fa-lock small"></i>
                                             </div>
                                             <h6 class="m-0 fw-bold text-success">3. ความปลอดภัยของบัญชี</h6>
@@ -283,15 +174,21 @@
                                             <div class="col-md-6 col-lg-4 position-relative">
                                                 <div class="input-group">
                                                     <div class="form-floating flex-grow-1">
-                                                        <input type="password" name="password" id="password" required class="form-control border-end-0" placeholder="รหัสผ่าน" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                                                        <label for="password" style="padding-left: 1rem;">กำหนดรหัสผ่าน</label>
+                                                        <input type="password" name="password" id="password" required
+                                                            class="form-control border-end-0" placeholder="รหัสผ่าน"
+                                                            style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                                        <label for="password"
+                                                            style="padding-left: 1rem;">กำหนดรหัสผ่าน</label>
                                                         <i class="fas fa-key input-icon"></i>
                                                     </div>
-                                                    <button type="button" class="btn btn-outline-secondary bg-light" onclick="togglePassword()" style="border-left: 0;">
+                                                    <button type="button" class="btn btn-outline-secondary bg-light"
+                                                        onclick="togglePassword()" style="border-left: 0;">
                                                         <i class="fas fa-eye" id="eye-icon"></i>
                                                     </button>
                                                 </div>
-                                                <div class="form-text ms-1 text-muted small mt-2"><i class="fas fa-info-circle me-1"></i>ควรมีความยาวอย่างน้อย 6 ตัวอักษร</div>
+                                                <div class="form-text ms-1 text-muted small mt-2"><i
+                                                        class="fas fa-info-circle me-1"></i>ควรมีความยาวอย่างน้อย 6
+                                                    ตัวอักษร</div>
                                             </div>
                                         </div>
                                     </div>
@@ -299,7 +196,8 @@
                                 </div>
 
                                 <!-- Footer Actions -->
-                                <div class="card-footer bg-light border-0 p-4 text-end d-flex justify-content-end gap-2">
+                                <div
+                                    class="card-footer bg-light border-0 p-4 text-end d-flex justify-content-end gap-2">
                                     <a href="../manage/manage_employee.php" class="btn btn-cancel">
                                         <i class="fas fa-times me-1"></i> ยกเลิก
                                     </a>
@@ -316,7 +214,7 @@
             <?php include("../../admin/include/footer.php"); ?>
         </div>
     </div>
-    
+
     <?php include("../include/script.php"); ?>
 
     <script>
@@ -335,4 +233,5 @@
         }
     </script>
 </body>
+
 </html>

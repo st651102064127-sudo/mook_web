@@ -1,257 +1,246 @@
 <?php
 include "../../assets/connect_db/connect_db.php";
-include "../../assets/check_login_admin/check_login_admin.php";
+include "../../assets/check_login/check_login.php";
 
-// ------------------------------------------------------------------
-// ส่วนที่ 1: เตรียมข้อมูลสำหรับ Dashboard (Backend Logic)
-// ------------------------------------------------------------------
+// --- ส่วนของการดึงข้อมูลจริงจาก Database (อ้างอิงจากโครงสร้าง db_supply) ---
 
-// 1. ดึงจำนวน "ประกาศจัดซื้อจัดจ้าง" ที่กำลังดำเนินการ (Active)
-$sqlNotice = "SELECT COUNT(*) as total FROM procurementnotice WHERE NoticeStatus = 'Active'";
-$resNotice = mysqli_fetch_assoc(mysqli_query($conn, $sqlNotice));
+// 1. นับจำนวนสัญญาพัสดุทั้งหมด
+$res_contract = mysqli_query($conn, "SELECT COUNT(ContractID) as total FROM procurementcontract");
+$count_contract = mysqli_fetch_assoc($res_contract)['total'];
 
-// 2. ดึงจำนวน "สัญญา" ที่จะหมดอายุใน 30 วัน (Critical Alert)
-$sqlExp = "SELECT COUNT(*) as total FROM procurementcontract 
-           WHERE ContractEndDate BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)";
-$resExp = mysqli_fetch_assoc(mysqli_query($conn, $sqlExp));
+// 2. นับจำนวนสัญญาที่ใกล้หมดอายุ (สมมติว่าภายใน 30 วัน)
+$res_expiring = mysqli_query($conn, "SELECT COUNT(ContractID) as total FROM procurementcontract WHERE ContractEndDate <= DATE_ADD(NOW(), INTERVAL 30 DAY)");
+$count_expiring = mysqli_fetch_assoc($res_expiring)['total'];
 
-// 3. ดึงจำนวน "ข่าวประชาสัมพันธ์" ทั้งหมด (ภายนอก + ภายใน)
-$sqlNews1 = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM externalnews"));
-$sqlNews2 = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as t FROM internalnews"));
-$totalNews = $sqlNews1['t'] + $sqlNews2['t'];
+// 3. นับจำนวนประกาศ (Notice)
+$res_notice = mysqli_query($conn, "SELECT COUNT(NoticeID) as total FROM procurementnotice");
+$count_notice = mysqli_fetch_assoc($res_notice)['total'];
 
-// 4. ดึงจำนวน "เจ้าหน้าที่" ในระบบ
-$sqlEmp = "SELECT COUNT(*) as total FROM employee";
-$resEmp = mysqli_fetch_assoc(mysqli_query($conn, $sqlEmp));
+// 4. จำนวนผู้เข้าชม (Visitors)
+$res_visitors = mysqli_query($conn, "SELECT COUNT(nov_id) as total FROM tb_number_of_visitors");
+$count_visitors = mysqli_fetch_assoc($res_visitors)['total'];
 
-// ฟังก์ชันแปลงวันที่ไทย (สำหรับแสดงผลในตาราง)
-function formatDateThai($datetime) {
-    if ($datetime == '0000-00-00 00:00:00' || $datetime == null) return "-";
-    $monthThai = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-    $ts = strtotime($datetime);
-    $day = date("j", $ts);
-    $month = $monthThai[(int)date("n", $ts)];
-    $year = date("Y", $ts) + 543;
-    return "$day $month $year"; // แสดงแบบย่อ เช่น 12 ม.ค. 2569
+// 5. ข้อมูลสำหรับกราฟ Role (Member vs User)
+$res_roles = mysqli_query($conn, "SELECT EmpRole, COUNT(*) as count FROM employee GROUP BY EmpRole");
+$role_labels = [];
+$role_data = [];
+while($r = mysqli_fetch_assoc($res_roles)) {
+    $role_labels[] = $r['EmpRole'];
+    $role_data[] = $r['count'];
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <?php include("../include/header.php"); ?>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ระบบจัดการพัสดุ</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <?php include("../../admin/include/header.php"); ?>
+
     <style>
-        .card-dashboard {
+        body { font-family: 'Kanit', sans-serif; background-color: #f4f6f9; }
+        
+        /* Dashboard Styling */
+        .stat-card {
             border: none;
             border-radius: 15px;
-            transition: transform 0.2s;
-            overflow: hidden;
+            transition: transform 0.3s;
         }
-        .card-dashboard:hover {
-            transform: translateY(-5px); /* ขยับขึ้นเล็กน้อยเมื่อเอาเมาส์ชี้ */
-        }
-        .icon-dashboard {
-            opacity: 0.3;
+        .stat-card:hover { transform: translateY(-5px); }
+        .bg-gradient-green { background: linear-gradient(45deg, #198754, #28a745); color: white; }
+        .bg-gradient-blue { background: linear-gradient(45deg, #0d6efd, #0dcaf0); color: white; }
+        .bg-gradient-orange { background: linear-gradient(45deg, #fd7e14, #ffc107); color: white; }
+        .bg-gradient-purple { background: linear-gradient(45deg, #6610f2, #6f42c1); color: white; }
+        
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            height: 100%;
         }
     </style>
 </head>
 
-<body class="sb-nav-fixed" style="background-color: #f5f5f5;">
-
-    <?php include("../include/navbar.php"); ?>
+<body class="sb-nav-fixed">
+    <?php include("../../admin/include/navbar.php"); ?>
 
     <div id="layoutSidenav">
-        
         <div id="layoutSidenav_nav">
-            <?php include("../include/sidebar.php"); ?>
+            <?php include("../../admin/include/sidebar.php"); ?>
         </div>
 
         <div id="layoutSidenav_content">
             <main>
-                <div class="container-fluid px-4">
+                <div class="container-fluid px-4 py-4">
                     
-                    <div class="d-flex justify-content-between align-items-center my-4">
-                        <div>
-                            <h1 class="text-success fw-bold m-0">Dashboard</h1>
-                            <p class="text-muted small m-0">ภาพรวมระบบบริหารงานพัสดุ โรงพยาบาลหล่มสัก</p>
-                        </div>
-                        <div class="text-end">
-                             <span class="badge bg-white text-dark border shadow-sm px-3 py-2">
-                                <i class="fas fa-calendar-alt me-2 text-success"></i>
-                                <?= formatDateThai(date("Y-m-d H:i:s")); ?>
-                             </span>
-                        </div>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h2 class="fw-bold text-dark"><i class="fas fa-chart-line me-2 text-success"></i>ภาพรวมระบบ (Dashboard)</h2>
+                        <div class="text-muted small"><?php echo date("d M Y H:i"); ?></div>
                     </div>
 
-                    <div class="row">
+                    <div class="row g-4 mb-4">
                         <div class="col-xl-3 col-md-6">
-                            <div class="card card-dashboard bg-primary text-white mb-4 shadow">
-                                <div class="card-body d-flex justify-content-between align-items-center p-4">
-                                    <div>
-                                        <h2 class="mb-0 fw-bold"><?= $resNotice['total']; ?></h2>
-                                        <div class="small opacity-75">ประกาศ (กำลังดำเนินการ)</div>
+                            <div class="card stat-card bg-gradient-green shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small opacity-75">สัญญาพัสดุทั้งหมด</div>
+                                            <div class="display-6 fw-bold"><?= $count_contract ?></div>
+                                        </div>
+                                        <i class="fas fa-file-contract fa-2x opacity-50"></i>
                                     </div>
-                                    <i class="fas fa-bullhorn fa-3x icon-dashboard"></i>
-                                </div>
-                                <div class="card-footer bg-primary border-0 d-flex align-items-center justify-content-between">
-                                    <a class="small text-white text-decoration-none stretched-link" href="manage_proNotice.php">ดูรายละเอียด</a>
-                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-xl-3 col-md-6">
-                            <div class="card card-dashboard bg-danger text-white mb-4 shadow">
-                                <div class="card-body d-flex justify-content-between align-items-center p-4">
-                                    <div>
-                                        <h2 class="mb-0 fw-bold"><?= $resExp['total']; ?></h2>
-                                        <div class="small opacity-75">สัญญาหมดอายุใน 30 วัน</div>
+                            <div class="card stat-card bg-gradient-orange shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small opacity-75">สัญญาใกล้หมดอายุ</div>
+                                            <div class="display-6 fw-bold"><?= $count_expiring ?></div>
+                                        </div>
+                                        <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
                                     </div>
-                                    <i class="fas fa-file-contract fa-3x icon-dashboard"></i>
-                                </div>
-                                <div class="card-footer bg-danger border-0 d-flex align-items-center justify-content-between">
-                                    <a class="small text-white text-decoration-none stretched-link" href="manage_proContract.php">จัดการด่วน</a>
-                                    <div class="small text-white"><i class="fas fa-exclamation-circle"></i></div>
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-xl-3 col-md-6">
-                            <div class="card card-dashboard bg-success text-white mb-4 shadow">
-                                <div class="card-body d-flex justify-content-between align-items-center p-4">
-                                    <div>
-                                        <h2 class="mb-0 fw-bold"><?= $totalNews; ?></h2>
-                                        <div class="small opacity-75">ข่าวประชาสัมพันธ์ทั้งหมด</div>
+                            <div class="card stat-card bg-gradient-blue shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small opacity-75">ประกาศจัดซื้อจัดจ้าง</div>
+                                            <div class="display-6 fw-bold"><?= $count_notice ?></div>
+                                        </div>
+                                        <i class="fas fa-bullhorn fa-2x opacity-50"></i>
                                     </div>
-                                    <i class="fas fa-newspaper fa-3x icon-dashboard"></i>
-                                </div>
-                                <div class="card-footer bg-success border-0 d-flex align-items-center justify-content-between">
-                                    <a class="small text-white text-decoration-none stretched-link" href="manage_exnews.php">ดูรายการข่าว</a>
-                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-xl-3 col-md-6">
-                            <div class="card card-dashboard bg-dark text-white mb-4 shadow">
-                                <div class="card-body d-flex justify-content-between align-items-center p-4">
-                                    <div>
-                                        <h2 class="mb-0 fw-bold"><?= $resEmp['total']; ?></h2>
-                                        <div class="small opacity-75">เจ้าหน้าที่ในระบบ</div>
+                            <div class="card stat-card bg-gradient-purple shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small opacity-75">จำนวนผู้เข้าชมสะสม</div>
+                                            <div class="display-6 fw-bold"><?= $count_visitors ?></div>
+                                        </div>
+                                        <i class="fas fa-users fa-2x opacity-50"></i>
                                     </div>
-                                    <i class="fas fa-users fa-3x icon-dashboard"></i>
-                                </div>
-                                <div class="card-footer bg-dark border-0 d-flex align-items-center justify-content-between">
-                                    <a class="small text-white text-decoration-none stretched-link" href="manage_employee.php">จัดการข้อมูล</a>
-                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-xl-6">
-                            <div class="card mb-4 shadow border-0 rounded-3">
-                                <div class="card-header bg-white py-3 border-bottom">
-                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                    <span class="fw-bold text-dark">สัญญาที่ต้องเร่งดำเนินการ (ใกล้หมดอายุ)</span>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover align-middle mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th class="ps-4">ชื่อสัญญา</th>
-                                                    <th>วันหมดอายุ</th>
-                                                    <th>สถานะ</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                // ดึง 5 สัญญาที่ใกล้หมดอายุที่สุด
-                                                $sqlAlert = "SELECT ContractName, ContractEndDate FROM procurementcontract 
-                                                             WHERE ContractEndDate BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY) 
-                                                             ORDER BY ContractEndDate ASC LIMIT 5";
-                                                $qAlert = mysqli_query($conn, $sqlAlert);
-                                                
-                                                if (mysqli_num_rows($qAlert) > 0) {
-                                                    while($rowAlert = mysqli_fetch_assoc($qAlert)) {
-                                                        echo "<tr>";
-                                                        echo "<td class='ps-4'><div class='text-truncate' style='max-width: 200px;'>".htmlspecialchars($rowAlert['ContractName'])."</div></td>";
-                                                        echo "<td class='text-danger fw-bold'>".formatDateThai($rowAlert['ContractEndDate'])."</td>";
-                                                        echo "<td><span class='badge bg-warning text-dark rounded-pill'>ใกล้หมดอายุ</span></td>";
-                                                        echo "</tr>";
-                                                    }
-                                                } else {
-                                                    echo "<tr><td colspan='3' class='text-center text-muted py-4'><i class='fas fa-check-circle text-success me-1'></i> ไม่มีสัญญาที่ใกล้หมดอายุ</td></tr>";
-                                                }
-                                                ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-white text-center border-0">
-                                    <a href="manage_proContract.php" class="btn btn-sm btn-outline-secondary rounded-pill px-4">ดูทั้งหมด</a>
-                                </div>
+                    <div class="row g-4 mb-4">
+                        <div class="col-lg-8">
+                            <div class="chart-container">
+                                <h5 class="fw-bold mb-4"><i class="fas fa-history me-2 text-primary"></i>แนวโน้มผู้เข้าใช้งาน</h5>
+                                <canvas id="visitorTrendChart" style="max-height: 300px;"></canvas>
                             </div>
                         </div>
+                        <div class="col-lg-4">
+                            <div class="chart-container text-center">
+                                <h5 class="fw-bold mb-4">สัดส่วนเจ้าหน้าที่</h5>
+                                <canvas id="roleDoughnutChart" style="max-height: 250px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="col-xl-6">
-                            <div class="card mb-4 shadow border-0 rounded-3">
-                                <div class="card-header bg-white py-3 border-bottom">
-                                    <i class="fas fa-history text-primary me-2"></i>
-                                    <span class="fw-bold text-dark">การเข้าใช้งานล่าสุดของเจ้าหน้าที่</span>
-                                </div>
-                                <div class="card-body p-0">
-                                    <ul class="list-group list-group-flush">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <i class="fas fa-clock me-1 text-success"></i> สัญญาพัสดุล่าสุด
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ชื่อสัญญา</th>
+                                            <th>หน่วยงาน</th>
+                                            <th>วันที่สิ้นสุด</th>
+                                            <th class="text-center">สถานะ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                                         <?php
-                                        // ดึงข้อมูล 5 คนล่าสุดที่ล็อกอิน
-                                        $sqlLog = "SELECT EmpName, EmpLastLogin, EmpPosition FROM employee 
-                                                   WHERE EmpLastLogin IS NOT NULL
-                                                   ORDER BY EmpLastLogin DESC LIMIT 5";
-                                        $qLog = mysqli_query($conn, $sqlLog);
-                                        
-                                        if (mysqli_num_rows($qLog) > 0) {
-                                            while($rowLog = mysqli_fetch_assoc($qLog)) {
-                                                // คำนวณเวลาที่ผ่านไป (เช่น "2 นาทีที่แล้ว") - แบบง่ายใช้แสดงวันที่แทน
-                                                $loginTime = date("H:i", strtotime($rowLog['EmpLastLogin']));
-                                                $loginDate = formatDateThai($rowLog['EmpLastLogin']);
+                                        $latest_sql = "SELECT * FROM procurementcontract ORDER BY ContractID DESC LIMIT 3";
+                                        $latest_res = mysqli_query($conn, $latest_sql);
+                                        while($row = mysqli_fetch_assoc($latest_res)):
                                         ?>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
-                                            <div class="d-flex align-items-center">
-                                                <div class="rounded-circle bg-light d-flex justify-content-center align-items-center me-3 border" style="width: 45px; height: 45px;">
-                                                    <i class="fas fa-user text-secondary"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-bold text-dark"><?= htmlspecialchars($rowLog['EmpName']) ?></div>
-                                                    <div class="small text-muted"><?= htmlspecialchars($rowLog['EmpPosition']) ?></div>
-                                                </div>
-                                            </div>
-                                            <div class="text-end">
-                                                <div class="small fw-bold text-success"><?= $loginTime ?> น.</div>
-                                                <div class="small text-muted" style="font-size: 0.75rem;"><?= $loginDate ?></div>
-                                            </div>
-                                        </li>
-                                        <?php 
-                                            } 
-                                        } else {
-                                            echo "<li class='list-group-item text-center text-muted py-4'>ยังไม่มีประวัติการเข้าใช้งาน</li>";
-                                        }
-                                        ?>
-                                    </ul>
-                                </div>
+                                        <tr>
+                                            <td class="fw-medium"><?= $row['ContractName'] ?></td>
+                                            <td><?= $row['ContractDepartment'] ?></td>
+                                            <td><span class="text-muted"><?= $row['ContractEndDate'] ?></span></td>
+                                            <td class="text-center">
+                                                <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3">Active</span>
+                                            </td>
+                                        </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
                 </div>
             </main>
-            
             <?php include("../../admin/include/footer.php"); ?>
         </div>
     </div>
 
     <?php include("../include/script.php"); ?>
 
+    <script>
+        // 1. กราฟเส้น (Visitor Trend)
+        const ctxTrend = document.getElementById('visitorTrendChart').getContext('2d');
+        new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'],
+                datasets: [{
+                    label: 'ผู้เข้าชม',
+                    data: [12, 19, 15, 8, 22, 5, 10], // ข้อมูลตัวอย่าง
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { display: false }, x: { grid: { display: false } } }
+            }
+        });
+
+        // 2. กราฟวงกลม (Role Distribution)
+        const ctxRole = document.getElementById('roleDoughnutChart').getContext('2d');
+        new Chart(ctxRole, {
+            type: 'doughnut',
+            data: {
+                labels: <?php echo json_encode($role_labels); ?>,
+                datasets: [{
+                    data: <?php echo json_encode($role_data); ?>,
+                    backgroundColor: ['#198754', '#0d6efd', '#ffc107'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    </script>
 </body>
 </html>

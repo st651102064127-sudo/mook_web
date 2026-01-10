@@ -2,15 +2,16 @@
 include "../../assets/connect_db/connect_db.php";
 include "../../assets/check_login_admin/check_login_superAdmin.php";
 
-$sql = "SELECT * FROM employee 
-        WHERE EmpRole = 'Member'
-        ORDER BY EmpID DESC";
-
+// 1. แก้ SQL ให้ดึงทุกคน (นำ WHERE EmpRole ออก)
+$sql = "SELECT * FROM employee ORDER BY EmpID DESC";
 $result = mysqli_query($conn, $sql);
 
-// ฟังก์ชันแปลงวันที่ไทย
+// 2. แปลงผลลัพธ์เป็น Array เพื่อใช้กับ foreach
+$employees = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+// ฟังก์ชันแปลงวันที่ไทย (คงเดิม)
 function th_date($datetime) {
-    if (empty($datetime)) return "-"; // ถ้าไม่มีค่าให้คืนเป็น -
+    if (empty($datetime)) return "-"; 
     $months = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     $ts = strtotime($datetime);
     return date("j", $ts) . " " . $months[(int)date("n", $ts)] . " " . (date("Y", $ts) + 543);
@@ -34,7 +35,7 @@ function th_date($datetime) {
     <?php include("../../admin/include/header.php"); ?>
 
     <style>
-        /* Theme: ราชการทันสมัย */
+        /* UI เดิมของคุณทั้งหมด */
         body { 
             font-family: 'Kanit', sans-serif; 
             background-color: #f4f6f9; 
@@ -101,7 +102,7 @@ function th_date($datetime) {
                     <div class="card border mb-4 shadow-sm">
                         <div class="card-header bg-white py-3">
                             <i class="fas fa-list-ul me-1 text-success"></i>
-                            รายชื่อเจ้าหน้าที่ (Member)
+                            รายชื่อเจ้าหน้าที่ทั้งหมด
                         </div>
                         <div class="card-body">
                             <table id="datatablesSimple" class="table table-striped table-hover border">
@@ -118,15 +119,14 @@ function th_date($datetime) {
                                 <tbody>
                                     <?php 
                                     $i = 1; 
-                                    while ($row = mysqli_fetch_assoc($result)): 
-                                        // สร้างตัวอักษรย่อจากชื่อเพื่อทำ Avatar
+                                    // 3. เปลี่ยนจาก while เป็น foreach
+                                    foreach ($employees as $row): 
                                         $initial = mb_substr($row['EmpName'], 0, 1, "UTF-8");
                                     ?>
                                     <tr>
                                         <td class="text-center"><?= $i++ ?></td>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                          
                                                 <div>
                                                     <div class="fw-bold text-dark"><?= htmlspecialchars($row['EmpName']) ?></div>
                                                     <div class="small text-muted"><i class="fas fa-envelope me-1"></i><?= htmlspecialchars($row['EmpEmail'] ?? '-') ?></div>
@@ -139,11 +139,8 @@ function th_date($datetime) {
                                         </td>
                                         <td class="text-center">
                                             <span class="badge-role">
-                                                <i class="fas fa-user-tag me-1"></i> <?php if($_SESSION['user_role'] === "Admin"){
-                                                    echo "Admin";
-                                                }else{
-                                                    echo "Member";
-                                                } ?>
+                                                <i class="fas fa-user-tag me-1"></i> 
+                                                <?= $row['EmpRole'] ?>
                                             </span>
                                         </td>
                                         <td>
@@ -164,7 +161,7 @@ function th_date($datetime) {
                                             </div>
                                         </td>
                                     </tr>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -184,9 +181,9 @@ function th_date($datetime) {
             $('#datatablesSimple').DataTable({
                 language: { url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json" },
                 pageLength: 10,
-                columnDefs: [{ orderable: false, targets: [0, 5] }] // ปิด sort ที่ลำดับ(0) และจัดการ(5)
+                columnDefs: [{ orderable: false, targets: [0, 5] }] 
             });
         });
     </script>
 </body>
-</html>
+</html> 

@@ -1,11 +1,60 @@
 <?php
-require_once '../../assets/connect_db/connect_db.php';
+session_start(); // 1. ต้องเริ่ม Session เพื่อให้ดึงค่า $_SESSION['user_id'] มาตรวจสอบได้
+include "../../assets/connect_db/connect_db.php";
+include "../../assets/check_login_admin/check_login_superAdmin.php";
 
-$id = $_GET['id'];
-$sql = "UPDATE employee SET EmpRole = 'User' WHERE EmpID = ?";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
+// 2. ตรวจสอบว่ามีการส่ง ID มาหรือไม่
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $current_user_id = $_SESSION['user_id']; // ไอดีที่ล็อกอินอยู่ในขณะนี้
 
-header("Location: ../manage/manage_employee.php");
+    // 🔴 3. ตรวจสอบว่า ID ที่จะลบ ตรงกับ ID ของตัวเองหรือไม่
+    if ($id == $current_user_id) {
+        echo "
+            <script>
+                alert('❗ ผิดพลาด: คุณไม่สามารถลบบัญชีของตัวเองในขณะที่ใช้งานอยู่ได้');
+                window.location.href = '../manage/manage_employee.php';
+            </script>
+        ";
+        exit(); // หยุดการทำงานทันที ห้ามรันคำสั่ง DELETE ด้านล่าง
+    }
+
+    // ✅ 4. ถ้าไม่ใช่ ID ตัวเอง ให้เริ่มกระบวนการลบข้อมูล (ใช้ Prepared Statement)
+    $sql = "DELETE FROM employee WHERE EmpID = ?";
+    
+    if ($stmt = $conn->prepare($sql)) {
+        $stmt->bind_param("i", $id);
+
+        if ($stmt->execute()) {
+            echo "
+                <script>
+                    alert('✅ ลบข้อมูลเจ้าหน้าที่สำเร็จ');
+                    window.location.href = '../manage/manage_employee.php';
+                </script>
+            ";
+        } else {
+            echo "
+                <script>
+                    alert('❌ เกิดข้อผิดพลาดในการลบข้อมูล: " . $stmt->error . "');
+                    history.back();
+                </script>
+            ";
+        }
+        $stmt->close();
+    } else {
+        echo "
+            <script>
+                alert('❌ ไม่สามารถเตรียมคำสั่ง SQL ได้');
+                history.back();
+            </script>
+        ";
+    }
+
+} else {
+    // กรณีเข้าถึงไฟล์โดยตรงโดยไม่มีการส่ง ID
+    header("Location: ../manage/manage_employee.php");
+    exit();
+}
+
+$conn->close();
 ?>

@@ -2,22 +2,22 @@
 include "../../assets/connect_db/connect_db.php";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // รับค่าและตัดช่องว่างหัวท้ายออก (trim)
-    $EmpID         = $_POST['EmpID'];
-    $EmpName       = trim($_POST['EmpName']);
-    $EmpCod        = trim($_POST['EmpCod']);
-    $EmpEmail      = trim($_POST['EmpEmail']);
-    $EmpPhone      = trim($_POST['EmpPhone']);
-    $EmpPosition   = trim($_POST['EmpPosition']);
-    $EmpDepartment = trim($_POST['EmpDepartment']);
-    $EmpAgency     = trim($_POST['EmpAgency']);
-    $EmpRole       = trim($_POST['EmpRole']);
-    $EmpPassword   = trim($_POST['EmpPassword']); // optional
+    // 1. รับค่าจากฟอร์มตาม attribute 'name' ที่กำหนดไว้ใน frmedit_employee.php
+    $EmpID      = $_POST['EmpID'];
+    $name       = trim($_POST['name']);
+    $email      = trim($_POST['email']);
+    $tel        = trim($_POST['tel']);
+    $EmpCod     = trim($_POST['EmpCod']); // ค่าจาก input readonly
+    $position   = trim($_POST['position']);
+    $role       = trim($_POST['role']);
+    $department = trim($_POST['department']);
+    $agency     = trim($_POST['agency']);
+    $password   = trim($_POST['password']); // optional
 
-    // 🔴 1. ตรวจสอบค่าว่าง (Validation) 🔴
-    // หากฟิลด์ใดฟิลด์หนึ่งเป็นค่าว่าง ให้แจ้งเตือนและดีดกลับ
-    if (empty($EmpName) || empty($EmpCod) || empty($EmpEmail) || empty($EmpPhone) || 
-        empty($EmpPosition) || empty($EmpDepartment) || empty($EmpAgency) || empty($EmpRole)) {
+    // 🔴 2. ตรวจสอบค่าว่าง (Validation) 🔴
+    // ตรวจสอบฟิลด์สำคัญ (ยกเว้น password เพราะเป็นทางเลือก)
+    if (empty($name) || empty($email) || empty($tel) || empty($EmpCod) || 
+        empty($position) || empty($role) || empty($department) || empty($agency)) {
         echo "
             <script>
                 alert('❗ กรุณากรอกข้อมูลให้ครบถ้วน ห้ามเว้นว่างในช่องที่กำหนด');
@@ -27,11 +27,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit();
     }
 
-    // 🔍 2. ตรวจสอบว่ามี Email หรือ รหัสพนักงาน ซ้ำกับคนอื่นหรือไม่
-    // เช็คโดยข้าม ID ตัวเองไป (EmpID != ?) เพราะถ้าไม่แก้ Email ตัวเอง มันจะฟ้องว่าซ้ำกับตัวเอง
+    // 🔍 3. ตรวจสอบความซ้ำซ้อนของข้อมูล (ยกเว้น ID ของตัวเอง)
     $check_sql = "SELECT EmpID FROM employee WHERE (EmpEmail = ? OR EmpCod = ?) AND EmpID != ?";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("ssi", $EmpEmail, $EmpCod, $EmpID);
+    $check_stmt->bind_param("ssi", $email, $EmpCod, $EmpID);
     $check_stmt->execute();
     $check_stmt->store_result();
 
@@ -47,10 +46,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     $check_stmt->close();
 
-    // ✅ 3. เริ่ม UPDATE ข้อมูล
-    if (!empty($EmpPassword)) {
-        // กรณี : มีการเปลี่ยนรหัสผ่าน (กรอกช่องรหัสผ่านใหม่มา)
-        $hashedPassword = password_hash($EmpPassword, PASSWORD_DEFAULT);
+    // ✅ 4. เริ่ม UPDATE ข้อมูลลง Database
+    if (!empty($password)) {
+        // กรณี : มีการเปลี่ยนรหัสผ่านใหม่
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $sql = "UPDATE employee SET 
                     EmpName = ?, EmpCod = ?, EmpEmail = ?, EmpPhone = ?, 
                     EmpPosition = ?, EmpDepartment = ?, EmpAgency = ?, EmpRole = ?, 
@@ -58,25 +57,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 WHERE EmpID = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sssssssssi", 
-            $EmpName, $EmpCod, $EmpEmail, $EmpPhone, 
-            $EmpPosition, $EmpDepartment, $EmpAgency, $EmpRole, 
+            $name, $EmpCod, $email, $tel, 
+            $position, $department, $agency, $role, 
             $hashedPassword, $EmpID);
     } else {
-        // กรณี : ไม่เปลี่ยนรหัสผ่าน (ไม่ได้กรอกช่องรหัสผ่านใหม่)
+        // กรณี : ไม่มีการเปลี่ยนรหัสผ่าน
         $sql = "UPDATE employee SET 
                     EmpName = ?, EmpCod = ?, EmpEmail = ?, EmpPhone = ?, 
                     EmpPosition = ?, EmpDepartment = ?, EmpAgency = ?, EmpRole = ?
                 WHERE EmpID = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ssssssssi", 
-            $EmpName, $EmpCod, $EmpEmail, $EmpPhone, 
-            $EmpPosition, $EmpDepartment, $EmpAgency, $EmpRole, $EmpID);
+            $name, $EmpCod, $email, $tel, 
+            $position, $department, $agency, $role, $EmpID);
     }
 
     if ($stmt->execute()) {
         echo "
             <script>
-                alert('✅ อัปเดตข้อมูลสำเร็จ');
+                alert('✅ อัปเดตข้อมูลเจ้าหน้าที่สำเร็จ');
                 window.location.href = '../manage/manage_employee.php';
             </script>
         ";
@@ -93,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $conn->close();
 
 } else {
-    // ถ้าเข้าหน้านี้โดยไม่ได้กด Submit Form
+    // กรณีเข้าถึงไฟล์โดยตรงโดยไม่ผ่านฟอร์ม
     echo "
         <script>
             alert('ไม่อนุญาตให้เข้าถึงหน้านี้โดยตรง');
