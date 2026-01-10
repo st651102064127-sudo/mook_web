@@ -6,7 +6,12 @@ include "../../assets/check_login/check_login.php";
 $res_contract = mysqli_query($conn, "SELECT COUNT(ContractID) as total FROM procurementcontract");
 $count_contract = mysqli_fetch_assoc($res_contract)['total'];
 
-$res_expiring = mysqli_query($conn, "SELECT COUNT(ContractID) as total FROM procurementcontract WHERE ContractEndDate <= DATE_ADD(NOW(), INTERVAL 30 DAY)");
+$sql_expiring = "SELECT COUNT(ContractID) as total 
+                 FROM procurementcontract 
+                 WHERE ContractEndDate >= DATE(NOW()) 
+                 AND ContractEndDate <= DATE_ADD(NOW(), INTERVAL 7 DAY)";
+
+$res_expiring = mysqli_query($conn, $sql_expiring);
 $count_expiring = mysqli_fetch_assoc($res_expiring)['total'];
 
 $res_notice = mysqli_query($conn, "SELECT COUNT(NoticeID) as total FROM procurementnotice");
@@ -55,7 +60,7 @@ for ($i = 6; $i >= 0; $i--) {
     $last_7_days[$date_key] = 0; // ค่าเริ่มต้นเป็น 0
 }
 
-// Query ดึงข้อมูลจริงจาก Database
+
 $sql_visit = "SELECT DATE(nov_date_save) as vdate, COUNT(*) as vcount 
               FROM tb_number_of_visitors 
               WHERE nov_date_save >= DATE(NOW()) - INTERVAL 6 DAY 

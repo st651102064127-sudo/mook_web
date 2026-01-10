@@ -8,8 +8,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // ถ้าไม่ใช่ Member
-if (($_SESSION['user_role'] !== 'Member')) {
-  echo "<script>alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้'); window.location.href='../../frmlogin.php';</script>";
+if ( ($_SESSION['user_role'] && (!$_SESSION['user_role'] === 'Member') ||  !$_SESSION['user_role'] === 'Admin'))  {
+  
+      echo "<script>alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้'); window.location.href='../../frmlogin.php';</script>";
    exit();
 }
 ?>
