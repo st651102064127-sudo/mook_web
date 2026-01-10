@@ -1,3 +1,25 @@
+<?php
+// ตั้งค่า Timezone ให้เป็นไทย
+date_default_timezone_set('Asia/Bangkok');
+
+// เชื่อมต่อฐานข้อมูล
+// (../assets คือถอยออก 1 ชั้นจากโฟลเดอร์ process ไปหา assets)
+include "assets/connect_db/connect_db.php";
+
+if ($conn) {
+    // ดึงเวลาปัจจุบัน
+    $current_date = date("Y-m-d H:i:s");
+
+    // คำสั่งเพิ่มข้อมูลลงตาราง (อิงจากฐานข้อมูล db_supply)
+    $sql = "INSERT INTO tb_number_of_visitors (nov_date_save) VALUES ('$current_date')";
+    
+    // สั่งรันคำสั่ง SQL
+    $result = mysqli_query($conn, $sql);
+
+    // ปิดการเชื่อมต่อ
+    mysqli_close($conn);
+}
+?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -74,13 +96,14 @@
 
     </div>
 
-    <script>
+<script>
         const scene = document.getElementById('scene');
         const clouds = document.getElementById('clouds');
         const ground = document.getElementById('ground');
         const hospital = document.getElementById('hospital');
         const trees = document.getElementById('trees');
 
+        // Effect เมาส์ขยับ
         document.addEventListener('mousemove', (e) => {
             const x = (window.innerWidth - e.pageX * 2) / 100; 
             const y = (window.innerHeight - e.pageY * 2) / 100; 
@@ -91,26 +114,30 @@
             trees.style.transform = `translate(${x * 1.5}px, ${y * 1.5}px)`;
         });
 
+        // ฟังก์ชันเมื่อกดปุ่มเข้าสู่เว็บไซต์
         function enterSite() {
             const btn = document.querySelector('.enter-btn');
             const textContainer = document.querySelector('.text-container');
             
+            // 1. เริ่มเล่น Animation หายตัว
             textContainer.style.transition = 'opacity 0.5s, transform 0.5s';
             textContainer.style.opacity = '0';
             textContainer.style.transform = 'translateY(-20px)';
             
             btn.style.transform = 'scale(0.9)';
             btn.innerText = 'กำลังเข้าสู่ระบบ...';
-            
+            btn.disabled = true; // ป้องกันการกดรัวๆ
+
+            // 2. แอบส่งสัญญาณไปนับจำนวนผู้เข้าชม (ไม่ต้องรอผลลัพธ์)
+            // เช็ค Path 'process/count_visitor.php' ให้ตรงกับที่สร้างจริง
+            navigator.sendBeacon('process/count_visitor.php');
+
+            // 3. หน่วงเวลา 0.8 วินาที แล้วเปลี่ยนหน้า
             setTimeout(() => {
-                window.location.href = 'main.php'
-                
-                // Reset (เอาออกได้ในการใช้งานจริง)
-                textContainer.style.opacity = '1';
-                textContainer.style.transform = 'translateY(0)';
-                btn.innerText = 'เข้าสู่เว็บไซต์';
+                window.location.href = 'main.php';
             }, 800);
         }
     </script>
+    
 </body>
 </html>

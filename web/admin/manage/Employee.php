@@ -2,31 +2,77 @@
 include "../../assets/connect_db/connect_db.php";
 include "../../assets/check_login/check_login.php";
 
-// --- ส่วนของการดึงข้อมูลจริงจาก Database (อ้างอิงจากโครงสร้าง db_supply) ---
-
-// 1. นับจำนวนสัญญาพัสดุทั้งหมด
+// --- 1. ข้อมูลตัวเลข Stat Cards (เหมือนเดิม) ---
 $res_contract = mysqli_query($conn, "SELECT COUNT(ContractID) as total FROM procurementcontract");
 $count_contract = mysqli_fetch_assoc($res_contract)['total'];
 
-// 2. นับจำนวนสัญญาที่ใกล้หมดอายุ (สมมติว่าภายใน 30 วัน)
 $res_expiring = mysqli_query($conn, "SELECT COUNT(ContractID) as total FROM procurementcontract WHERE ContractEndDate <= DATE_ADD(NOW(), INTERVAL 30 DAY)");
 $count_expiring = mysqli_fetch_assoc($res_expiring)['total'];
 
-// 3. นับจำนวนประกาศ (Notice)
 $res_notice = mysqli_query($conn, "SELECT COUNT(NoticeID) as total FROM procurementnotice");
 $count_notice = mysqli_fetch_assoc($res_notice)['total'];
 
-// 4. จำนวนผู้เข้าชม (Visitors)
 $res_visitors = mysqli_query($conn, "SELECT COUNT(nov_id) as total FROM tb_number_of_visitors");
 $count_visitors = mysqli_fetch_assoc($res_visitors)['total'];
 
-// 5. ข้อมูลสำหรับกราฟ Role (Member vs User)
+// --- 2. ข้อมูลสำหรับกราฟ Role (Member vs Admin) ---
 $res_roles = mysqli_query($conn, "SELECT EmpRole, COUNT(*) as count FROM employee GROUP BY EmpRole");
 $role_labels = [];
 $role_data = [];
+$role_colors = []; // เตรียมสีให้ตรงกับ Role
+
 while($r = mysqli_fetch_assoc($res_roles)) {
-    $role_labels[] = $r['EmpRole'];
+    $role_labels[] = $r['EmpRole']; // เช่น Admin, Member
     $role_data[] = $r['count'];
+    
+    // กำหนดสี: Admin = ส้ม/เหลือง, Member = เขียว/ฟ้า
+    if($r['EmpRole'] == 'Admin') {
+        $role_colors[] = '#fd7e14'; 
+    } else {
+        $role_colors[] = '#198754';
+    }
+}
+
+// --- 3. ข้อมูลสำหรับกราฟ Visitor Trend (ย้อนหลัง 7 วัน) ---
+// สร้าง Array วันที่ย้อนหลัง 7 วันเตรียมไว้ก่อน (เผื่อวันไหนไม่มีคนเข้า จะได้เป็น 0 ไม่กราฟแหว่ง)
+$visitor_labels = [];
+$visitor_data = [];
+$last_7_days = [];
+
+// ฟังก์ชันแปลงเดือนไทยย่อ
+function getThaiMonth($date) {
+    $thai_months = [
+        "01"=>"ม.ค.", "02"=>"ก.พ.", "03"=>"มี.ค.", "04"=>"เม.ย.", "05"=>"พ.ค.", "06"=>"มิ.ย.", 
+        "07"=>"ก.ค.", "08"=>"ส.ค.", "09"=>"ก.ย.", "10"=>"ต.ค.", "11"=>"พ.ย.", "12"=>"ธ.ค."
+    ];
+    $m = date("m", strtotime($date));
+    $d = date("d", strtotime($date));
+    return intval($d) . " " . $thai_months[$m];
+}
+
+for ($i = 6; $i >= 0; $i--) {
+    $date_key = date('Y-m-d', strtotime("-$i days")); // 2023-10-25
+    $last_7_days[$date_key] = 0; // ค่าเริ่มต้นเป็น 0
+}
+
+// Query ดึงข้อมูลจริงจาก Database
+$sql_visit = "SELECT DATE(nov_date_save) as vdate, COUNT(*) as vcount 
+              FROM tb_number_of_visitors 
+              WHERE nov_date_save >= DATE(NOW()) - INTERVAL 6 DAY 
+              GROUP BY vdate";
+$res_visit = mysqli_query($conn, $sql_visit);
+
+while ($row = mysqli_fetch_assoc($res_visit)) {
+    // เอาข้อมูลจริงไปแทนที่ใน Array ที่เตรียมไว้
+    if (isset($last_7_days[$row['vdate']])) {
+        $last_7_days[$row['vdate']] = $row['vcount'];
+    }
+}
+
+// แยก Key (วันที่) และ Value (จำนวน) เพื่อส่งให้ Chart.js
+foreach ($last_7_days as $date => $count) {
+    $visitor_labels[] = getThaiMonth($date); // แปลงเป็น "25 ต.ค."
+    $visitor_data[] = $count;
 }
 ?>
 
@@ -145,7 +191,7 @@ while($r = mysqli_fetch_assoc($res_roles)) {
                     <div class="row g-4 mb-4">
                         <div class="col-lg-8">
                             <div class="chart-container">
-                                <h5 class="fw-bold mb-4"><i class="fas fa-history me-2 text-primary"></i>แนวโน้มผู้เข้าใช้งาน</h5>
+                                <h5 class="fw-bold mb-4"><i class="fas fa-history me-2 text-primary"></i>แนวโน้มผู้เข้าใช้งาน (7 วันล่าสุด)</h5>
                                 <canvas id="visitorTrendChart" style="max-height: 300px;"></canvas>
                             </div>
                         </div>
@@ -202,29 +248,40 @@ while($r = mysqli_fetch_assoc($res_roles)) {
     <?php include("../include/script.php"); ?>
 
     <script>
-        // 1. กราฟเส้น (Visitor Trend)
+        // 1. กราฟเส้น (Visitor Trend) - ข้อมูลจริง
         const ctxTrend = document.getElementById('visitorTrendChart').getContext('2d');
         new Chart(ctxTrend, {
             type: 'line',
             data: {
-                labels: ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'],
+                // ส่งค่า Array วันที่ (เช่น 25 ต.ค.) จาก PHP
+                labels: <?php echo json_encode($visitor_labels); ?>, 
                 datasets: [{
-                    label: 'ผู้เข้าชม',
-                    data: [12, 19, 15, 8, 22, 5, 10], // ข้อมูลตัวอย่าง
+                    label: 'ผู้เข้าชม (คน)',
+                    // ส่งค่า Array จำนวนคน จาก PHP
+                    data: <?php echo json_encode($visitor_data); ?>, 
                     borderColor: '#198754',
                     backgroundColor: 'rgba(25, 135, 84, 0.1)',
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#198754',
+                    pointRadius: 4
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { display: false }, x: { grid: { display: false } } }
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1 } // ให้แกน Y เพิ่มทีละ 1 จำนวนเต็ม
+                    }, 
+                    x: { grid: { display: false } } 
+                }
             }
         });
 
-        // 2. กราฟวงกลม (Role Distribution)
+        // 2. กราฟวงกลม (Role Distribution) - ข้อมูลจริง
         const ctxRole = document.getElementById('roleDoughnutChart').getContext('2d');
         new Chart(ctxRole, {
             type: 'doughnut',
@@ -232,13 +289,19 @@ while($r = mysqli_fetch_assoc($res_roles)) {
                 labels: <?php echo json_encode($role_labels); ?>,
                 datasets: [{
                     data: <?php echo json_encode($role_data); ?>,
-                    backgroundColor: ['#198754', '#0d6efd', '#ffc107'],
-                    borderWidth: 0
+                    backgroundColor: <?php echo json_encode($role_colors); ?>,
+                    borderWidth: 0,
+                    hoverOffset: 4
                 }]
             },
             options: {
                 cutout: '70%',
-                plugins: { legend: { position: 'bottom' } }
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 20 }
+                    } 
+                }
             }
         });
     </script>
